@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --color-space-blue: #181E4C;
+  --color-space-light: #3B82F6;
+  --color-space-white: #FFFFFF;
+  --color-space-gray: #F3F4F6;
+  --color-space-gray-50: #F9FAFB;
+  --color-admin-pink: #E6A4B4;
+  --color-admin-red: #D95F59;
+  --color-admin-bg: #FFF0F5;
+}
+
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply min-h-screen bg-linear-to-br from-space-blue via-[#0f1235] to-black text-white antialiased;
 }

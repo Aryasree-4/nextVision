@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "axios": "^1.13.4",
+    "concurrently": "^8.2.2",
+    "form-data": "^4.0.5"
   }
 }

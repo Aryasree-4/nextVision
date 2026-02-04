@@ -22,6 +22,10 @@ const validateRegister = [
         .normalizeEmail()
         .toLowerCase(),
 
+    body('role')
+        .optional()
+        .isIn(['learner', 'mentor']).withMessage('Invalid role selected'),
+
     body('password')
         .trim()
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')

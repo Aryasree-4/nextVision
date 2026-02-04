@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
             required: true,
             select: false, // Do not return password by default
         },
+        role: {
+            type: String,
+            enum: ['learner', 'mentor', 'admin'],
+            default: 'learner',
+        },
     },
     {
         timestamps: true,

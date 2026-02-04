@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const connectDB = require('./config/db');
@@ -49,7 +50,13 @@ app.use(
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const courseRoutes = require('./routes/courseRoutes'); // Added course routes
+
 app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes); // Added course routes
+
+// Serve static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Added static file serving
 
 app.get('/', (req, res) => {
     res.send('API is running...');

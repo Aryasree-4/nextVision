@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ allowedRoles }) => {
     const { user, loading } = useAuth();
 
     if (loading) {
@@ -12,7 +12,18 @@ const ProtectedRoute = () => {
         );
     }
 
-    return user ? <Outlet /> : <Navigate to="/login" replace />;
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+        // Redirect to appropriate dashboard if authorized but wrong role
+        if (user.role === 'mentor') return <Navigate to="/mentor-dashboard" replace />;
+        if (user.role === 'admin') return <Navigate to="/admin-dashboard" replace />;
+        return <Navigate to="/learner-dashboard" replace />;
+    }
+
+    return <Outlet />;
 };
 
 export default ProtectedRoute;
