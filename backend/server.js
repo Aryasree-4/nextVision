@@ -21,7 +21,9 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(cors({
     origin: (origin, callback) => callback(null, true), // Allow everything for debug
     credentials: true,
@@ -51,9 +53,13 @@ app.use(
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes'); // Added course routes
+const classroomRoutes = require('./routes/classroomRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); // Added course routes
+app.use('/api/classrooms', classroomRoutes);
+app.use('/api/users', userRoutes);
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Added static file serving
