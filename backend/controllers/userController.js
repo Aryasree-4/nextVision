@@ -89,30 +89,38 @@ const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 const updateUserProfile = async (req, res) => {
     try {
+        console.log('Update Profile Request:', { body: req.body, file: req.file ? req.file.filename : 'none' });
         const user = await User.findById(req.session.userId).select('+password');
 
         if (!user) {
+            console.warn('User not found for ID:', req.session.userId);
             return res.status(404).json({ message: 'User not found' });
         }
 
         if (req.body.bio !== undefined) user.bio = req.body.bio;
 
         if (req.file) {
+            console.log('New file uploaded:', req.file.filename);
             // Delete old image if it exists and is not default
             if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
-                const oldPath = path.join(__dirname, '../public/uploads', user.profilePicture);
+                const oldPath = path.resolve(__dirname, '..', 'public', 'uploads', user.profilePicture);
+                console.log('Attempting to delete old profile pic at:', oldPath);
                 if (fs.existsSync(oldPath)) {
                     try {
                         fs.unlinkSync(oldPath);
+                        console.log('Old profile pic deleted successfully');
                     } catch (err) {
                         console.error('Failed to delete old profile pic:', err);
                     }
+                } else {
+                    console.log('Old profile pic not found on disk, skipping deletion');
                 }
             }
             user.profilePicture = req.file.filename;
         }
 
         await user.save();
+        console.log('Profile updated successfully for user:', user.email);
 
         res.status(200).json({
             _id: user._id,
@@ -124,8 +132,8 @@ const updateUserProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Update Profile Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Update Profile Error Stack:', error.stack);
+        res.status(500).json({ message: 'Server error while updating profile', error: error.message });
     }
 };
 

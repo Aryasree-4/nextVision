@@ -10,7 +10,11 @@ const {
     getAllClassrooms,
     reassignStudent,
     deleteClassroom,
-    unenrollStudent
+    unenrollStudent,
+    markSyllabusViewed,
+    updateQuiz,
+    activateClassroom,
+    getPerformanceTracking
 } = require('../controllers/classroomController');
 
 // Middleware for Admin check (reusing inline or extracting)
@@ -37,6 +41,10 @@ router.use(protect);
 router.post('/activate', activateCourse);
 router.get('/my-classrooms', getMyClassrooms);
 router.put('/:id/content', updateClassroomContent);
+router.put('/:id/view-syllabus', markSyllabusViewed);
+router.put('/:id/quiz', updateQuiz);
+router.put('/:id/activate-now', activateClassroom);
+router.get('/:id/performance', getPerformanceTracking);
 
 // Learner Routes
 router.post('/enroll', enrollStudent);

@@ -14,6 +14,9 @@ const MentorDashboard = () => {
     const [editContent, setEditContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [performanceData, setPerformanceData] = useState([]);
+    const [activeSubTab, setActiveSubTab] = useState('syllabus'); // syllabus, performance
+    const [editingQuiz, setEditingQuiz] = useState(null); // { moduleIndex, questions }
 
     useEffect(() => {
         fetchCourses();
@@ -94,6 +97,54 @@ const MentorDashboard = () => {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update content' });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleMarkSyllabusViewed = async (classroomId) => {
+        try {
+            const { data } = await api.put(`/classrooms/${classroomId}/view-syllabus`);
+            setSelectedClassroom(data);
+            setMessage({ type: 'success', text: 'Syllabus marked as viewed!' });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleSaveQuiz = async () => {
+        if (!selectedClassroom || !editingQuiz) return;
+        setLoading(true);
+        try {
+            const { data } = await api.put(`/classrooms/${selectedClassroom._id}/quiz`, editingQuiz);
+            setSelectedClassroom(data);
+            setEditingQuiz(null);
+            setMessage({ type: 'success', text: 'Quiz updated successfully' });
+        } catch (error) {
+            setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update quiz' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleActivateClassroom = async () => {
+        if (!selectedClassroom) return;
+        setLoading(true);
+        try {
+            const { data } = await api.put(`/classrooms/${selectedClassroom._id}/activate-now`);
+            setSelectedClassroom(data.classroom);
+            setMessage({ type: 'success', text: data.message });
+        } catch (error) {
+            setMessage({ type: 'error', text: error.response?.data?.message || 'Activation failed' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPerformance = async (classroomId) => {
+        try {
+            const { data } = await api.get(`/classrooms/${classroomId}/performance`);
+            setPerformanceData(data);
+        } catch (error) {
+            console.error('Failed to fetch performance data', error);
         }
     };
 
@@ -213,73 +264,305 @@ const MentorDashboard = () => {
 
                     {activeTab === 'classrooms' && selectedClassroom && (
                         <div>
-                            <button onClick={() => setSelectedClassroom(null)} className="mb-4 text-sm text-gray-400 hover:text-white">&larr; Back to Classrooms</button>
-                            <h2 className="text-2xl font-bold text-white mb-6">Managing: {selectedClassroom.course?.title}</h2>
-
-                            <div className="mb-8 bg-black/20 border border-white/5 rounded-lg p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4">Enrolled Learners ({selectedClassroom.students?.length || 0})</h3>
-                                {(!selectedClassroom.students || selectedClassroom.students.length === 0) ? (
-                                    <p className="text-gray-400 italic">No students enrolled yet.</p>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {selectedClassroom.students.map(student => (
-                                            student && (
-                                                <div key={student._id} className="flex items-center gap-3 bg-white/5 p-3 rounded hover:bg-white/10 transition group">
-                                                    <div className="w-10 h-10 rounded-full bg-space-light/20 flex items-center justify-center text-sm font-bold overflow-hidden">
-                                                        {student.profilePicture && student.profilePicture !== 'default-profile.png' ?
-                                                            <img src={`http://localhost:5000/uploads/${student.profilePicture}`} alt={student.name} className="w-full h-full object-cover" /> :
-                                                            (student.name?.charAt(0) || '?')
-                                                        }
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-white font-medium">{student.name}</p>
-                                                        <a
-                                                            href={`/profile/${student._id}`}
-                                                            className="text-xs text-space-light hover:underline opacity-0 group-hover:opacity-100 transition"
-                                                            onClick={(e) => { e.stopPropagation(); }}
-                                                        >
-                                                            View Profile
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            )
-                                        ))}
-                                    </div>
-                                )}
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-white">Managing: {selectedClassroom.course?.title}</h2>
+                                <div className="flex bg-black/20 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setActiveSubTab('syllabus')}
+                                        className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'syllabus' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Syllabus & Quizzes
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveSubTab('performance'); fetchPerformance(selectedClassroom._id); }}
+                                        className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'performance' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Performance Tracking
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="space-y-6">
-                                {Array.isArray(selectedClassroom.syllabus) && selectedClassroom.syllabus.map((module, mIndex) => (
-                                    module && (
-                                        <div key={module._id} className="bg-black/20 rounded-lg p-4 border border-white/5">
-                                            <h3 className="text-lg font-semibold text-space-light mb-3">Module {mIndex + 1}: {module.title}</h3>
-                                            <div className="space-y-3 pl-4 border-l-2 border-white/10">
-                                                {Array.isArray(module.topics) && module.topics.map(topic => (
-                                                    topic && (
-                                                        <div key={topic._id} className="bg-white/5 p-3 rounded hover:bg-white/10 transition">
-                                                            <div className="flex justify-between items-start">
-                                                                <div>
-                                                                    <h4 className="font-medium text-white">{topic.title}</h4>
-                                                                    <p className="text-xs text-gray-400 mt-1 line-clamp-1">{topic.content}</p>
+                            {!selectedClassroom.isActive && activeSubTab === 'syllabus' && (
+                                <div className="mb-8 bg-blue-900/40 border border-blue-500/30 rounded-xl p-6 backdrop-blur-md">
+                                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm">🚀</span>
+                                        Classroom Activation Checklist
+                                    </h3>
+                                    <div className="space-y-4 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${selectedClassroom.syllabusViewed ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                                {selectedClassroom.syllabusViewed ? '✓' : '1'}
+                                            </div>
+                                            <span className={selectedClassroom.syllabusViewed ? 'text-green-400' : 'text-gray-300'}>View the entire syllabus</span>
+                                            {!selectedClassroom.syllabusViewed && (
+                                                <button
+                                                    onClick={() => handleMarkSyllabusViewed(selectedClassroom._id)}
+                                                    className="ml-auto text-xs bg-space-light px-3 py-1 rounded hover:bg-space-light/80"
+                                                >
+                                                    Mark as Viewed
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${selectedClassroom.quizzes?.some(q => q.moduleIndex === 0) ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                                {selectedClassroom.quizzes?.some(q => q.moduleIndex === 0) ? '✓' : '2'}
+                                            </div>
+                                            <span className={selectedClassroom.quizzes?.some(q => q.moduleIndex === 0) ? 'text-green-400' : 'text-gray-300'}>Create Module 1 Quiz (Min 4 questions)</span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={handleActivateClassroom}
+                                        disabled={!selectedClassroom.syllabusViewed || !selectedClassroom.quizzes?.some(q => q.moduleIndex === 0)}
+                                        isLoading={loading}
+                                        className="w-full md:w-auto"
+                                    >
+                                        Activate Classroom Now
+                                    </Button>
+                                </div>
+                            )}
+
+                            {activeSubTab === 'performance' ? (
+                                <div className="bg-black/20 border border-white/5 rounded-lg overflow-hidden">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                                                <th className="p-4">Learner Name</th>
+                                                <th className="p-4">Module-wise Marks</th>
+                                                <th className="p-4">Attempts</th>
+                                                <th className="p-4">Status</th>
+                                                <th className="p-4">Finished</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-sm text-gray-300 divide-y divide-white/5">
+                                            {performanceData.map(data => (
+                                                <tr key={data._id} className="hover:bg-white/5 transition">
+                                                    <td className="p-4">
+                                                        <div className="font-medium text-white">{data.studentId?.name}</div>
+                                                        <div className="text-xs text-gray-500">{data.studentId?.email}</div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex gap-2">
+                                                            {data.moduleProgress.map(mp => (
+                                                                <div key={mp._id} className={`px-2 py-1 rounded text-[10px] ${mp.passStatus ? 'bg-green-500/20 text-green-400' : 'bg-gray-700/50 text-gray-500'}`} title={`Module ${mp.moduleIndex + 1}`}>
+                                                                    M{mp.moduleIndex + 1}: {mp.quizScore}
                                                                 </div>
-                                                                <button
-                                                                    onClick={() => handleEditTopic(module, topic)}
-                                                                    className="text-xs bg-blue-600/50 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {data.moduleProgress.reduce((acc, curr) => acc + curr.attempts, 0)} total
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${data.isCourseCompleted ? 'bg-green-500 text-white' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                                                            {data.isCourseCompleted ? 'CERTIFIED' : 'IN PROGRESS'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-center">
+                                                        {data.isCourseCompleted ? '✅' : '⏳'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {performanceData.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="5" className="p-8 text-center text-gray-500 italic">No student performance data available yet.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="mb-8 bg-black/20 border border-white/5 rounded-lg p-6">
+                                        <h3 className="text-lg font-semibold text-white mb-4">Enrolled Learners ({selectedClassroom.students?.length || 0})</h3>
+                                        {(!selectedClassroom.students || selectedClassroom.students.length === 0) ? (
+                                            <p className="text-gray-400 italic">No students enrolled yet.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {selectedClassroom.students.map(student => (
+                                                    student && (
+                                                        <div key={student._id} className="flex items-center gap-3 bg-white/5 p-3 rounded hover:bg-white/10 transition group">
+                                                            <div className="w-10 h-10 rounded-full bg-space-light/20 flex items-center justify-center text-sm font-bold overflow-hidden">
+                                                                {student.profilePicture && student.profilePicture !== 'default-profile.png' ?
+                                                                    <img src={`http://localhost:5000/uploads/${student.profilePicture}`} alt={student.name} className="w-full h-full object-cover" /> :
+                                                                    (student.name?.charAt(0) || '?')
+                                                                }
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-white font-medium">{student.name}</p>
+                                                                <a
+                                                                    href={`/profile/${student._id}`}
+                                                                    className="text-xs text-space-light hover:underline opacity-0 group-hover:opacity-100 transition"
+                                                                    onClick={(e) => { e.stopPropagation(); }}
                                                                 >
-                                                                    Edit Content
-                                                                </button>
+                                                                    View Profile
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     )
                                                 ))}
                                             </div>
-                                        </div>
-                                    )
-                                ))}
-                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {Array.isArray(selectedClassroom.syllabus) && selectedClassroom.syllabus.map((module, mIndex) => (
+                                            module && (
+                                                <div key={module._id} className="bg-black/20 rounded-lg p-4 border border-white/5">
+                                                    <h3 className="text-lg font-semibold text-space-light mb-3">Module {mIndex + 1}: {module.title}</h3>
+                                                    <div className="space-y-3 pl-4 border-l-2 border-white/10">
+                                                        {Array.isArray(module.topics) && module.topics.map(topic => (
+                                                            topic && (
+                                                                <div key={topic._id} className="bg-white/5 p-3 rounded hover:bg-white/10 transition">
+                                                                    <div className="flex justify-between items-start">
+                                                                        <div>
+                                                                            <h4 className="font-medium text-white">{topic.title}</h4>
+                                                                            <p className="text-xs text-gray-400 mt-1 line-clamp-1">{topic.content}</p>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleEditTopic(module, topic)}
+                                                                            className="text-xs bg-blue-600/50 hover:bg-blue-600 text-white px-2 py-1 rounded transition"
+                                                                        >
+                                                                            Edit Content
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        ))}
+                                                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                                                            <div className="text-xs text-gray-400">
+                                                                {selectedClassroom.quizzes?.some(q => q.moduleIndex === mIndex) ?
+                                                                    <span className="text-green-500">✓ Quiz Created ({selectedClassroom.quizzes.find(q => q.moduleIndex === mIndex).questions.length} Questions)</span> :
+                                                                    <span className="text-yellow-500/80">⚠ No Quiz Created</span>
+                                                                }
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const existing = selectedClassroom.quizzes?.find(q => q.moduleIndex === mIndex);
+                                                                    setEditingQuiz({
+                                                                        moduleIndex: mIndex,
+                                                                        questions: existing ? existing.questions : [{ question: '', options: ['', '', '', ''], correctAnswer: '' }]
+                                                                    });
+                                                                }}
+                                                                className="text-xs bg-space-light hover:bg-space-light/80 text-white px-3 py-1 rounded transition shadow-sm"
+                                                            >
+                                                                {selectedClassroom.quizzes?.some(q => q.moduleIndex === mIndex) ? 'Edit Quiz' : 'Add Quiz'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
+
+                {editingQuiz && (
+                    <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60] overflow-y-auto">
+                        <div className="bg-space-blue border border-white/20 rounded-xl p-8 w-full max-w-4xl shadow-2xl my-8">
+                            <h3 className="text-2xl font-bold text-white mb-6">Module {editingQuiz.moduleIndex + 1} Assessment Quiz</h3>
+                            <div className="space-y-8 mb-8">
+                                {editingQuiz.questions.map((q, qIndex) => (
+                                    <div key={qIndex} className="bg-white/5 p-6 rounded-lg border border-white/10 relative group">
+                                        <button
+                                            onClick={() => {
+                                                const newQuestions = [...editingQuiz.questions];
+                                                newQuestions.splice(qIndex, 1);
+                                                setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                            }}
+                                            className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition"
+                                            title="Remove Question"
+                                        >
+                                            ✕
+                                        </button>
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Question {qIndex + 1}</label>
+                                            <input
+                                                type="text"
+                                                value={q.question}
+                                                onChange={(e) => {
+                                                    const newQuestions = [...editingQuiz.questions];
+                                                    newQuestions[qIndex].question = e.target.value;
+                                                    setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                                }}
+                                                className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none"
+                                                placeholder="Enter question text..."
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {q.options.map((opt, oIndex) => (
+                                                <div key={oIndex}>
+                                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Option {oIndex + 1}</label>
+                                                    <input
+                                                        type="text"
+                                                        value={opt}
+                                                        onChange={(e) => {
+                                                            const newQuestions = [...editingQuiz.questions];
+                                                            newQuestions[qIndex].options[oIndex] = e.target.value;
+                                                            setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                                        }}
+                                                        className="w-full bg-black/20 border border-white/5 rounded p-2 text-sm text-white focus:border-space-light outline-none"
+                                                        placeholder={`Option ${oIndex + 1}`}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-gray-400 mb-2">Correct Answer</label>
+                                            <select
+                                                value={q.correctAnswer}
+                                                onChange={(e) => {
+                                                    const newQuestions = [...editingQuiz.questions];
+                                                    newQuestions[qIndex].correctAnswer = e.target.value;
+                                                    setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                                }}
+                                                className="w-full bg-black/40 border border-white/10 rounded-md p-2 text-white outline-none focus:ring-2 focus:ring-space-light"
+                                            >
+                                                <option value="">Select Correct Option</option>
+                                                {q.options.map((opt, oIndex) => (
+                                                    <option key={oIndex} value={opt}>{opt || `Option ${oIndex + 1}`}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex flex-col md:flex-row justify-between gap-4">
+                                <button
+                                    onClick={() => {
+                                        setEditingQuiz({
+                                            ...editingQuiz,
+                                            questions: [...editingQuiz.questions, { question: '', options: ['', '', '', ''], correctAnswer: '' }]
+                                        });
+                                    }}
+                                    className="px-4 py-2 border border-space-light text-space-light rounded hover:bg-space-light/10 transition"
+                                >
+                                    + Add Question
+                                </button>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setEditingQuiz(null)}
+                                        className="px-6 py-2 bg-transparent text-gray-300 hover:text-white transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <Button
+                                        onClick={handleSaveQuiz}
+                                        isLoading={loading}
+                                        disabled={editingQuiz.questions.length < 4 || editingQuiz.questions.some(q => !q.question || q.options.some(o => !o) || !q.correctAnswer)}
+                                    >
+                                        Save Quiz
+                                    </Button>
+                                </div>
+                            </div>
+                            {editingQuiz.questions.length < 4 && (
+                                <p className="text-red-400 text-xs mt-4">Minimum 4 questions required to save.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {editingTopic && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">

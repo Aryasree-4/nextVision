@@ -55,11 +55,13 @@ const authRoutes = require('./routes/authRoutes');
 const courseRoutes = require('./routes/courseRoutes'); // Added course routes
 const classroomRoutes = require('./routes/classroomRoutes');
 const userRoutes = require('./routes/userRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); // Added course routes
 app.use('/api/classrooms', classroomRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/assessments', assessmentRoutes);
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Added static file serving

@@ -10,30 +10,14 @@ const activateCourse = async (req, res) => {
         const { courseId } = req.body;
         const mentorId = req.session.userId;
 
-        // Check if course exists
         const course = await Course.findById(courseId);
-        if (!course) {
-            return res.status(404).json({ message: 'Course not found' });
-        }
+        if (!course) return res.status(404).json({ message: 'Course not found' });
 
-        // Check if mentor already has an active classroom for this course
-        const existingClassroom = await Classroom.findOne({
-            course: courseId,
-            mentor: mentorId,
-            isActive: true
-        });
-
-        if (existingClassroom) {
-            return res.status(400).json({ message: 'You already have an active classroom for this course' });
-        }
-
-        // Copy syllabus
-        const syllabusCopy = course.modules.map(mod => ({
-            title: mod.title,
-            topics: mod.topics.map(topic => ({
+        const syllabusCopy = course.modules.map(module => ({
+            title: module.title,
+            topics: module.topics.map(topic => ({
                 title: topic.title,
-                content: topic.content,
-                originalTopicId: topic._id
+                content: topic.content
             }))
         }));
 
@@ -41,7 +25,7 @@ const activateCourse = async (req, res) => {
             course: courseId,
             mentor: mentorId,
             syllabus: syllabusCopy,
-            isActive: true,
+            isActive: false, // Start as inactive until mentor satisfies conditions
             students: []
         });
 
@@ -49,6 +33,75 @@ const activateCourse = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Mark Syllabus as Viewed
+// @route   PUT /api/classrooms/:id/view-syllabus
+// @access  Private/Mentor
+const markSyllabusViewed = async (req, res) => {
+    try {
+        const classroom = await Classroom.findOneAndUpdate(
+            { _id: req.params.id, mentor: req.session.userId },
+            { syllabusViewed: true },
+            { new: true }
+        );
+        if (!classroom) return res.status(404).json({ message: 'Classroom not found' });
+        res.status(200).json(classroom);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Add or Update Quiz for a Module
+// @route   PUT /api/classrooms/:id/quiz
+// @access  Private/Mentor
+const updateQuiz = async (req, res) => {
+    try {
+        const { moduleIndex, questions } = req.body;
+        if (!questions || questions.length < 4) {
+            return res.status(400).json({ message: 'Quiz must have at least 4 questions' });
+        }
+
+        const classroom = await Classroom.findOne({ _id: req.params.id, mentor: req.session.userId });
+        if (!classroom) return res.status(404).json({ message: 'Classroom not found' });
+
+        const quizIndex = classroom.quizzes.findIndex(q => q.moduleIndex === moduleIndex);
+        if (quizIndex !== -1) {
+            classroom.quizzes[quizIndex].questions = questions;
+        } else {
+            classroom.quizzes.push({ moduleIndex, questions });
+        }
+
+        await classroom.save();
+        res.status(200).json(classroom);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// @desc    Activate Classroom
+// @route   PUT /api/classrooms/:id/activate-now
+// @access  Private/Mentor
+const activateClassroom = async (req, res) => {
+    try {
+        const classroom = await Classroom.findOne({ _id: req.params.id, mentor: req.session.userId });
+        if (!classroom) return res.status(404).json({ message: 'Classroom not found' });
+
+        if (!classroom.syllabusViewed) {
+            return res.status(400).json({ message: 'You must view the syllabus before activation' });
+        }
+
+        const hasModule1Quiz = classroom.quizzes.some(q => q.moduleIndex === 0);
+        if (!hasModule1Quiz) {
+            return res.status(400).json({ message: 'You must create the first module quiz before activation' });
+        }
+
+        classroom.isActive = true;
+        await classroom.save();
+        res.status(200).json({ message: 'Classroom activated successfully', classroom });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -132,9 +185,22 @@ const enrollStudent = async (req, res) => {
         }
 
         const targetClassroom = availableClassrooms[0];
-
         targetClassroom.students.push(studentId);
         await targetClassroom.save();
+
+        // Initialize Progress
+        const Progress = require('../models/Progress');
+        await Progress.create({
+            studentId,
+            classroomId: targetClassroom._id,
+            moduleProgress: targetClassroom.syllabus.map((_, index) => ({
+                moduleIndex: index,
+                completed: false,
+                quizScore: 0,
+                attempts: 0,
+                passStatus: false
+            }))
+        });
 
         res.status(200).json({
             message: 'Enrolled successfully',
@@ -250,7 +316,7 @@ const unenrollStudent = async (req, res) => {
         }
 
         // Check if student is in this classroom
-        if (!classroom.students.includes(studentId)) {
+        if (!classroom.students.some(id => id.toString() === studentId.toString())) {
             return res.status(400).json({ message: 'You are not validly enrolled in this classroom' });
         }
 
@@ -263,8 +329,29 @@ const unenrollStudent = async (req, res) => {
     }
 };
 
+// @desc    Get Performance Tracking Data for Mentor
+// @route   GET /api/classrooms/:id/performance
+// @access  Private/Mentor
+const getPerformanceTracking = async (req, res) => {
+    try {
+        const classroomId = req.params.id;
+        const Progress = require('../models/Progress');
+
+        const performanceData = await Progress.find({ classroomId })
+            .populate('studentId', 'name email')
+            .lean();
+
+        res.status(200).json(performanceData);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     activateCourse,
+    markSyllabusViewed,
+    updateQuiz,
+    activateClassroom,
     getMyClassrooms,
     updateClassroomContent,
     enrollStudent,
@@ -272,5 +359,6 @@ module.exports = {
     getAllClassrooms,
     reassignStudent,
     deleteClassroom,
-    unenrollStudent
+    unenrollStudent,
+    getPerformanceTracking
 };

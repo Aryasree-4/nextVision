@@ -27,10 +27,22 @@ const classroomSchema = new mongoose.Schema({
         ref: 'User'
     }],
     syllabus: [moduleSchema], // Independent copy for the mentor
-    isActive: {
+    syllabusViewed: {
         type: Boolean,
-        default: true
-    }
+        default: false
+    },
+    isActive: { // This now acts as the "activation" flag after conditions met
+        type: Boolean,
+        default: false
+    },
+    quizzes: [{
+        moduleIndex: Number,
+        questions: [{
+            question: String,
+            options: [String],
+            correctAnswer: String
+        }]
+    }]
 }, {
     timestamps: true
 });

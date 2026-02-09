@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import ProfileIcon from '../components/ProfileIcon';
 import Button from '../components/Button';
+import LearningContainer from '../components/LearningContainer';
 
 const LearnerDashboard = () => {
     const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ const LearnerDashboard = () => {
     const [myEnrollments, setMyEnrollments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [selectedEnrollment, setSelectedEnrollment] = useState(null);
 
     useEffect(() => {
         fetchCourses();
@@ -135,7 +137,10 @@ const LearnerDashboard = () => {
                                             <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2">
                                                 {enrolled ? (
                                                     <>
-                                                        <button className="w-full py-2 bg-green-600/80 text-white rounded cursor-default">
+                                                        <button
+                                                            onClick={() => setSelectedEnrollment(myEnrollments.find(e => e && e.course?._id === course._id))}
+                                                            className="w-full py-2 bg-green-600/80 hover:bg-green-600 text-white rounded transition shadow-lg"
+                                                        >
                                                             Continue Learning
                                                         </button>
                                                         <button
@@ -145,7 +150,7 @@ const LearnerDashboard = () => {
                                                                     handleUnenroll(enrollment._id);
                                                                 }
                                                             }}
-                                                            className="w-full py-1 text-sm text-red-400 hover:text-red-300 hover:underline"
+                                                            className="w-full py-1 text-sm text-red-400 hover:text-red-300 hover:underline mt-2"
                                                         >
                                                             Quit Course
                                                         </button>
@@ -167,6 +172,17 @@ const LearnerDashboard = () => {
                         </div>
                     )}
                 </div>
+
+                {selectedEnrollment && (
+                    <LearningContainer
+                        classroom={selectedEnrollment} // The enrollment response contains the classroom structure
+                        enrollment={selectedEnrollment}
+                        onClose={() => {
+                            setSelectedEnrollment(null);
+                            fetchMyEnrollments(); // Refresh to check for completion
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

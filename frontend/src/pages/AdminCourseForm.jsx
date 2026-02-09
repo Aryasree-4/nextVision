@@ -85,13 +85,9 @@ const AdminCourseForm = () => {
 
         try {
             if (isEditMode) {
-                await api.put(`/courses/${id}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.put(`/courses/${id}`, formData);
             } else {
-                await api.post('/courses', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/courses', formData);
             }
             navigate('/admin-dashboard');
         } catch (err) {
