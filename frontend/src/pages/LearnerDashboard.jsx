@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import ProfileIcon from '../components/ProfileIcon';
 import Button from '../components/Button';
 
 const LearnerDashboard = () => {
@@ -18,7 +19,9 @@ const LearnerDashboard = () => {
     const fetchCourses = async () => {
         try {
             const { data } = await api.get('/courses?published=true');
-            setCourses(data);
+            if (Array.isArray(data)) {
+                setCourses(data);
+            }
         } catch (error) {
             console.error('Failed to fetch courses', error);
         }
@@ -27,7 +30,9 @@ const LearnerDashboard = () => {
     const fetchMyEnrollments = async () => {
         try {
             const { data } = await api.get('/classrooms/my-enrollments');
-            setMyEnrollments(data);
+            if (Array.isArray(data)) {
+                setMyEnrollments(data);
+            }
         } catch (error) {
             console.error('Failed to fetch enrollments', error);
         }
@@ -39,7 +44,7 @@ const LearnerDashboard = () => {
         try {
             await api.post('/classrooms/enroll', { courseId });
             setMessage({ type: 'success', text: 'Enrolled successfully! You have been assigned to a classroom.' });
-            fetchMyEnrollments(); // Refresh enrollments to show new status
+            fetchMyEnrollments();
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to enroll. Course might be full or unavailable.' });
         } finally {
@@ -62,8 +67,11 @@ const LearnerDashboard = () => {
     };
 
     const isEnrolled = (courseId) => {
-        return myEnrollments.some(enrollment => enrollment.course?._id === courseId);
+        if (!Array.isArray(myEnrollments)) return false;
+        return myEnrollments.some(enrollment => enrollment && enrollment.course?._id === courseId);
     };
+
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-transparent p-8">
@@ -73,12 +81,15 @@ const LearnerDashboard = () => {
                         <h1 className="text-3xl font-bold">Learner Dashboard</h1>
                         <p className="text-gray-300">Welcome, {user?.name}</p>
                     </div>
-                    <button
-                        onClick={logout}
-                        className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
-                    >
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-6">
+                        <ProfileIcon />
+                        <button
+                            onClick={logout}
+                            className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {message.text && (
@@ -90,11 +101,12 @@ const LearnerDashboard = () => {
                 <div className="bg-space-blue/30 backdrop-blur-md rounded-lg shadow-xl p-6 border border-white/10">
                     <h2 className="text-2xl font-semibold mb-6 text-white border-b border-white/10 pb-4">Available Courses</h2>
 
-                    {courses.length === 0 ? (
+                    {(!Array.isArray(courses) || courses.length === 0) ? (
                         <p className="text-gray-400">No courses available at the moment.</p>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {courses.map(course => {
+                                if (!course) return null;
                                 const enrolled = isEnrolled(course._id);
                                 return (
                                     <div key={course._id} className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:bg-white/15 transition group flex flex-col h-full">
@@ -128,7 +140,7 @@ const LearnerDashboard = () => {
                                                         </button>
                                                         <button
                                                             onClick={() => {
-                                                                const enrollment = myEnrollments.find(e => e.course?._id === course._id);
+                                                                const enrollment = Array.isArray(myEnrollments) ? myEnrollments.find(e => e && e.course?._id === course._id) : null;
                                                                 if (enrollment && window.confirm('Are you sure you want to quit this course? You will lose your spot in the classroom.')) {
                                                                     handleUnenroll(enrollment._id);
                                                                 }

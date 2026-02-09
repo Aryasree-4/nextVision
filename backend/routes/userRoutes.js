@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
-const { getAllUsers, createUser, deleteUser } = require('../controllers/userController');
+const { getAllUsers, createUser, deleteUser, getUserProfile, updateUserProfile } = require('../controllers/userController');
+const upload = require('../middleware/uploadMiddleware');
 
 // Middleware to check for Admin role
 const adminOnly = (req, res, next) => {
@@ -24,6 +25,11 @@ const adminOnly = (req, res, next) => {
 };
 
 router.use(protect);
+// Public/Protected Profile Routes (Self update doesn't need admin)
+router.get('/profile/:id', getUserProfile);
+router.put('/profile', upload.single('profilePicture'), updateUserProfile);
+
+// Admin Routes below
 router.use(adminOnly);
 
 router.get('/', getAllUsers);

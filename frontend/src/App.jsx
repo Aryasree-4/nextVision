@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminCourseForm from './pages/AdminCourseForm';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
+import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -34,6 +35,8 @@ function App() {
       {/* Fallback for /dashboard */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Navigate to="/learner-dashboard" replace />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:id" element={<Profile />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

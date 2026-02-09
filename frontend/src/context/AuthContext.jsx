@@ -14,8 +14,13 @@ export const AuthProvider = ({ children }) => {
         const checkAuth = async () => {
             try {
                 const { data } = await api.get('/auth/me');
-                setUser(data);
+                if (data && data._id) {
+                    setUser(data);
+                } else {
+                    setUser(null);
+                }
             } catch (error) {
+                console.error('CheckAuth Error:', error);
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -47,8 +52,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUserData = (newData) => {
+        setUser(prev => {
+            if (!prev) return newData;
+            return { ...prev, ...newData };
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, updateUserData }}>
             {children}
         </AuthContext.Provider>
     );

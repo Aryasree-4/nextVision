@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -69,8 +71,68 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// @desc    Get user profile
+// @route   GET /api/users/profile/:id
+const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Update user profile (Self)
+// @route   PUT /api/users/profile
+const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId).select('+password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (req.body.bio !== undefined) user.bio = req.body.bio;
+
+        if (req.file) {
+            // Delete old image if it exists and is not default
+            if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
+                const oldPath = path.join(__dirname, '../public/uploads', user.profilePicture);
+                if (fs.existsSync(oldPath)) {
+                    try {
+                        fs.unlinkSync(oldPath);
+                    } catch (err) {
+                        console.error('Failed to delete old profile pic:', err);
+                    }
+                }
+            }
+            user.profilePicture = req.file.filename;
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            bio: user.bio,
+            profilePicture: user.profilePicture
+        });
+
+    } catch (error) {
+        console.error('Update Profile Error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getAllUsers,
     createUser,
-    deleteUser
+    deleteUser,
+    updateUserProfile,
+    getUserProfile
 };

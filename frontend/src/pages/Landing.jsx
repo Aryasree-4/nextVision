@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Landing = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
     return (
         <div className="relative isolate px-6 pt-14 lg:px-8">
@@ -15,12 +15,20 @@ const Landing = () => {
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                     {user ? (
-                        <Link
-                            to="/dashboard"
-                            className="rounded-md bg-space-blue px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-space-blue/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-space-blue"
-                        >
-                            Go to Dashboard
-                        </Link>
+                        <div className="flex flex-col items-center gap-4">
+                            <Link
+                                to="/dashboard"
+                                className="rounded-md bg-space-blue px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-space-blue/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-space-blue"
+                            >
+                                Go to Dashboard
+                            </Link>
+                            <button
+                                onClick={logout}
+                                className="text-gray-400 hover:text-white text-xs underline cursor-pointer"
+                            >
+                                Sign Out
+                            </button>
+                        </div>
                     ) : (
                         <>
                             <Link

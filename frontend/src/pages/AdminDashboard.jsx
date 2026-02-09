@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import ProfileIcon from '../components/ProfileIcon';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     // Tabs
-    const [activeTab, setActiveTab] = useState('courses'); // courses | users | classrooms
+    const [activeTab, setActiveTab] = useState('courses');
 
     // Data States
     const [courses, setCourses] = useState([]);
@@ -31,13 +32,13 @@ const AdminDashboard = () => {
         try {
             if (activeTab === 'courses') {
                 const { data } = await api.get('/courses');
-                setCourses(data);
+                if (Array.isArray(data)) setCourses(data);
             } else if (activeTab === 'users') {
                 const { data } = await api.get('/users');
-                setUsers(data);
+                if (Array.isArray(data)) setUsers(data);
             } else if (activeTab === 'classrooms') {
                 const { data } = await api.get('/classrooms');
-                setClassrooms(data);
+                if (Array.isArray(data)) setClassrooms(data);
             }
         } catch (error) {
             console.error('Failed to fetch data', error);
@@ -51,7 +52,7 @@ const AdminDashboard = () => {
         if (window.confirm('Are you sure you want to delete this course?')) {
             try {
                 await api.delete(`/courses/${id}`);
-                setCourses(courses.filter(c => c._id !== id));
+                setCourses(prev => prev.filter(c => c._id !== id));
             } catch (error) {
                 console.error('Failed to delete course', error);
             }
@@ -75,7 +76,7 @@ const AdminDashboard = () => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
                 await api.delete(`/users/${id}`);
-                setUsers(users.filter(u => u._id !== id));
+                setUsers(prev => prev.filter(u => u._id !== id));
             } catch (error) {
                 alert(error.response?.data?.message || 'Failed to delete user');
             }
@@ -87,7 +88,7 @@ const AdminDashboard = () => {
         if (window.confirm('Deleting a classroom will unenroll all its students. Continue?')) {
             try {
                 await api.delete(`/classrooms/${id}`);
-                setClassrooms(classrooms.filter(c => c._id !== id));
+                setClassrooms(prev => prev.filter(c => c._id !== id));
             } catch (error) {
                 alert(error.response?.data?.message || 'Failed to delete classroom');
             }
@@ -95,11 +96,11 @@ const AdminDashboard = () => {
     };
 
     const initReassign = (studentId, fromClassroomId, courseId) => {
-        // Filter potential target classrooms (Same course, not current one, not full)
+        if (!Array.isArray(classrooms)) return;
         const targets = classrooms.filter(c =>
-            c.course?._id === courseId &&
+            c && c.course?._id === courseId &&
             c._id !== fromClassroomId &&
-            c.students.length < 20
+            c.students?.length < 20
         );
 
         if (targets.length === 0) {
@@ -119,11 +120,13 @@ const AdminDashboard = () => {
                 toClassroomId: reassignData.toClassroomId
             });
             setShowReassignModal(false);
-            fetchData(); // Refresh to show new state
+            fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to reassign student');
         }
     };
+
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-admin-bg p-8 text-gray-800">
@@ -133,16 +136,18 @@ const AdminDashboard = () => {
                         <h1 className="text-3xl font-bold text-admin-red">Admin Dashboard</h1>
                         <p className="text-gray-500 mt-1">Welcome back, {user?.name}</p>
                     </div>
-                    <button
-                        onClick={logout}
-                        className="px-4 py-2 bg-admin-red text-white rounded hover:bg-admin-red/90 transition shadow-sm"
-                    >
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-6">
+                        <ProfileIcon />
+                        <button
+                            onClick={logout}
+                            className="px-4 py-2 bg-admin-red text-white rounded hover:bg-admin-red/90 transition shadow-sm"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Sidebar / Tabs */}
                     <div className="lg:col-span-1 space-y-6">
                         <div className="bg-white p-6 rounded-xl shadow border border-admin-pink/20">
                             <h3 className="font-bold text-admin-red mb-4">Management</h3>
@@ -180,7 +185,6 @@ const AdminDashboard = () => {
                         )}
                     </div>
 
-                    {/* Main Content */}
                     <div className="lg:col-span-3">
                         <h2 className="text-2xl font-bold text-admin-red mb-6 capitalize">{activeTab} Management</h2>
 
@@ -188,32 +192,32 @@ const AdminDashboard = () => {
                             <p>Loading...</p>
                         ) : (
                             <>
-                                {/* COURSES TAB */}
                                 {activeTab === 'courses' && (
                                     <div className="space-y-4">
-                                        {courses.map(course => (
-                                            <div key={course._id} className="bg-white p-6 rounded-xl shadow border border-admin-pink/20 flex justify-between items-center">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                                                        {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
-                                                            <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover" />
-                                                        ) : (<div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Img</div>)}
+                                        {Array.isArray(courses) && courses.map(course => (
+                                            course && (
+                                                <div key={course._id} className="bg-white p-6 rounded-xl shadow border border-admin-pink/20 flex justify-between items-center">
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                                            {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
+                                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover" />
+                                                            ) : (<div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No Img</div>)}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-lg text-gray-800">{course.title}</h3>
+                                                            <p className="text-sm text-gray-500">{course.modules?.length || 0} Modules • {course.isPublished ? 'Published' : 'Draft'}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h3 className="font-bold text-lg text-gray-800">{course.title}</h3>
-                                                        <p className="text-sm text-gray-500">{course.modules?.length} Modules • {course.isPublished ? 'Published' : 'Draft'}</p>
+                                                    <div className="flex space-x-2">
+                                                        <button onClick={() => navigate(`/admin/edit-course/${course._id}`)} className="px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm">Edit</button>
+                                                        <button onClick={() => handleDeleteCourse(course._id)} className="px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm">Delete</button>
                                                     </div>
                                                 </div>
-                                                <div className="flex space-x-2">
-                                                    <button onClick={() => navigate(`/admin/edit-course/${course._id}`)} className="px-3 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm">Edit</button>
-                                                    <button onClick={() => handleDeleteCourse(course._id)} className="px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm">Delete</button>
-                                                </div>
-                                            </div>
+                                            )
                                         ))}
                                     </div>
                                 )}
 
-                                {/* USERS TAB */}
                                 {activeTab === 'users' && (
                                     <div className="bg-white rounded-xl shadow border border-admin-pink/20 overflow-hidden">
                                         <table className="min-w-full divide-y divide-gray-200">
@@ -226,59 +230,68 @@ const AdminDashboard = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {users.map(u => (
-                                                    <tr key={u._id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.name}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'admin' ? 'bg-red-100 text-red-800' : u.role === 'mentor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                                                {u.role}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                            <button onClick={() => handleDeleteUser(u._id)} className="text-red-600 hover:text-red-900">Delete</button>
-                                                        </td>
-                                                    </tr>
+                                                {Array.isArray(users) && users.map(u => (
+                                                    u && (
+                                                        <tr key={u._id}>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                <a href={`/profile/${u._id}`} className="text-blue-600 hover:text-blue-900 hover:underline">
+                                                                    {u.name}
+                                                                </a>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'admin' ? 'bg-red-100 text-red-800' : u.role === 'mentor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                                                    {u.role}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                                <button onClick={() => handleDeleteUser(u._id)} className="text-red-600 hover:text-red-900">Delete</button>
+                                                            </td>
+                                                        </tr>
+                                                    )
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 )}
 
-                                {/* CLASSROOMS TAB */}
                                 {activeTab === 'classrooms' && (
                                     <div className="space-y-6">
-                                        {classrooms.map(classroom => (
-                                            <div key={classroom._id} className="bg-white p-6 rounded-xl shadow border border-admin-pink/20">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div>
-                                                        <h3 className="text-xl font-bold text-gray-800">{classroom.course?.title || 'Unknown Course'}</h3>
-                                                        <p className="text-sm text-gray-500">Mentor: <span className="font-medium text-blue-600">{classroom.mentor?.name || 'Unknown'}</span></p>
+                                        {Array.isArray(classrooms) && classrooms.map(classroom => (
+                                            classroom && (
+                                                <div key={classroom._id} className="bg-white p-6 rounded-xl shadow border border-admin-pink/20">
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div>
+                                                            <h3 className="text-xl font-bold text-gray-800">{classroom.course?.title || 'Unknown Course'}</h3>
+                                                            <p className="text-sm text-gray-500">Mentor: <span className="font-medium text-blue-600">{classroom.mentor?.name || 'Unknown'}</span></p>
+                                                        </div>
+                                                        <button onClick={() => handleDeleteClassroom(classroom._id)} className="px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm">Delete Classroom</button>
                                                     </div>
-                                                    <button onClick={() => handleDeleteClassroom(classroom._id)} className="px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm">Delete Classroom</button>
-                                                </div>
 
-                                                <div className="bg-gray-50 p-4 rounded-lg">
-                                                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Students ({classroom.students?.length}/20)</h4>
-                                                    {classroom.students?.length === 0 ? (
-                                                        <p className="text-xs text-gray-400">No students enrolled</p>
-                                                    ) : (
-                                                        <ul className="space-y-2">
-                                                            {classroom.students.map(student => (
-                                                                <li key={student._id} className="flex justify-between items-center text-sm bg-white p-2 rounded border border-gray-100">
-                                                                    <span>{student.name} <span className="text-gray-400 text-xs">({student.email})</span></span>
-                                                                    <button
-                                                                        onClick={() => initReassign(student._id, classroom._id, classroom.course?._id)}
-                                                                        className="text-xs text-blue-600 hover:underline"
-                                                                    >
-                                                                        Reassign
-                                                                    </button>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
+                                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Students ({classroom.students?.length || 0}/20)</h4>
+                                                        {(!classroom.students || classroom.students.length === 0) ? (
+                                                            <p className="text-xs text-gray-400">No students enrolled</p>
+                                                        ) : (
+                                                            <ul className="space-y-2">
+                                                                {classroom.students.map(student => (
+                                                                    student && (
+                                                                        <li key={student._id} className="flex justify-between items-center text-sm bg-white p-2 rounded border border-gray-100">
+                                                                            <span>{student.name} <span className="text-gray-400 text-xs">({student.email})</span></span>
+                                                                            <button
+                                                                                onClick={() => initReassign(student._id, classroom._id, classroom.course?._id)}
+                                                                                className="text-xs text-blue-600 hover:underline"
+                                                                            >
+                                                                                Reassign
+                                                                            </button>
+                                                                        </li>
+                                                                    )
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )
                                         ))}
                                     </div>
                                 )}
@@ -287,7 +300,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Create User Modal */}
                 {showUserModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -320,7 +332,6 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
-                {/* Reassign Modal */}
                 {showReassignModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -333,10 +344,12 @@ const AdminDashboard = () => {
                                         value={reassignData.toClassroomId}
                                         onChange={e => setReassignData({ ...reassignData, toClassroomId: e.target.value })}
                                     >
-                                        {reassignData.targets?.map(target => (
-                                            <option key={target._id} value={target._id}>
-                                                Mentor: {target.mentor?.name} ({target.students.length}/20)
-                                            </option>
+                                        {Array.isArray(reassignData.targets) && reassignData.targets.map(target => (
+                                            target && (
+                                                <option key={target._id} value={target._id}>
+                                                    Mentor: {target.mentor?.name} ({target.students?.length || 0}/20)
+                                                </option>
+                                            )
                                         ))}
                                     </select>
                                 </div>

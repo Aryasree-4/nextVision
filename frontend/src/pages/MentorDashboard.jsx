@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from '../components/Button';
+import ProfileIcon from '../components/ProfileIcon';
 
 const MentorDashboard = () => {
     const { user, logout } = useAuth();
-    const [activeTab, setActiveTab] = useState('browse'); // 'browse' | 'classrooms'
+    const [activeTab, setActiveTab] = useState('browse');
     const [courses, setCourses] = useState([]);
     const [myClassrooms, setMyClassrooms] = useState([]);
     const [selectedClassroom, setSelectedClassroom] = useState(null);
@@ -22,7 +23,7 @@ const MentorDashboard = () => {
     const fetchCourses = async () => {
         try {
             const { data } = await api.get('/courses?published=true');
-            setCourses(data);
+            if (Array.isArray(data)) setCourses(data);
         } catch (error) {
             console.error('Failed to fetch courses', error);
         }
@@ -31,7 +32,7 @@ const MentorDashboard = () => {
     const fetchMyClassrooms = async () => {
         try {
             const { data } = await api.get('/classrooms/my-classrooms');
-            setMyClassrooms(data);
+            if (Array.isArray(data)) setMyClassrooms(data);
         } catch (error) {
             console.error('Failed to fetch classrooms', error);
         }
@@ -53,8 +54,9 @@ const MentorDashboard = () => {
     };
 
     const handleEditTopic = (module, topic) => {
+        if (!module || !topic) return;
         setEditingTopic({ moduleId: module._id, topicId: topic._id, title: topic.title });
-        setEditContent(topic.content);
+        setEditContent(topic.content || '');
     };
 
     const handleSaveContent = async () => {
@@ -67,18 +69,24 @@ const MentorDashboard = () => {
                 content: editContent
             });
 
-            // Update local state to reflect changes without refetching everything
+            // Update local state 
             const updatedClassroom = { ...selectedClassroom };
             const modIndex = updatedClassroom.syllabus.findIndex(m => m._id === editingTopic.moduleId);
-            const topicIndex = updatedClassroom.syllabus[modIndex].topics.findIndex(t => t._id === editingTopic.topicId);
-            updatedClassroom.syllabus[modIndex].topics[topicIndex].content = editContent;
-            setSelectedClassroom(updatedClassroom);
+            if (modIndex !== -1) {
+                const topicIndex = updatedClassroom.syllabus[modIndex].topics.findIndex(t => t._id === editingTopic.topicId);
+                if (topicIndex !== -1) {
+                    updatedClassroom.syllabus[modIndex].topics[topicIndex].content = editContent;
+                    setSelectedClassroom(updatedClassroom);
 
-            // Also update in myClassrooms list
-            const classroomIndex = myClassrooms.findIndex(c => c._id === selectedClassroom._id);
-            const updatedClassrooms = [...myClassrooms];
-            updatedClassrooms[classroomIndex] = updatedClassroom;
-            setMyClassrooms(updatedClassrooms);
+                    // Also update in myClassrooms list
+                    const classroomIndex = myClassrooms.findIndex(c => c._id === selectedClassroom._id);
+                    if (classroomIndex !== -1) {
+                        const updatedClassrooms = [...myClassrooms];
+                        updatedClassrooms[classroomIndex] = updatedClassroom;
+                        setMyClassrooms(updatedClassrooms);
+                    }
+                }
+            }
 
             setEditingTopic(null);
             setMessage({ type: 'success', text: 'Content updated successfully' });
@@ -89,6 +97,8 @@ const MentorDashboard = () => {
         }
     };
 
+    if (!user) return null;
+
     return (
         <div className="min-h-screen bg-transparent p-8">
             <div className="max-w-7xl mx-auto">
@@ -97,12 +107,15 @@ const MentorDashboard = () => {
                         <h1 className="text-3xl font-bold">Mentor Dashboard</h1>
                         <p className="text-gray-300">Welcome, {user?.name}</p>
                     </div>
-                    <button
-                        onClick={logout}
-                        className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
-                    >
-                        Logout
-                    </button>
+                    <div className="flex items-center gap-6">
+                        <ProfileIcon />
+                        <button
+                            onClick={logout}
+                            className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {message.text && (
@@ -111,7 +124,6 @@ const MentorDashboard = () => {
                     </div>
                 )}
 
-                {/* Tabs */}
                 <div className="flex space-x-4 mb-6">
                     <button
                         onClick={() => { setActiveTab('browse'); setSelectedClassroom(null); }}
@@ -123,52 +135,79 @@ const MentorDashboard = () => {
                         onClick={() => setActiveTab('classrooms')}
                         className={`px-4 py-2 rounded-md transition ${activeTab === 'classrooms' ? 'bg-space-light text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
                     >
-                        My Classrooms ({myClassrooms.length})
+                        My Classrooms ({Array.isArray(myClassrooms) ? myClassrooms.length : 0})
                     </button>
                 </div>
 
                 <div className="bg-space-blue/30 backdrop-blur-md rounded-lg shadow-xl p-6 border border-white/10 min-h-[500px]">
                     {activeTab === 'browse' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {courses.map(course => (
-                                <div key={course._id} className="bg-white/10 border border-white/10 rounded-xl overflow-hidden hover:bg-white/15 transition flex flex-col">
-                                    <div className="h-40 bg-gray-800 relative">
-                                        {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
-                                            <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
-                                        )}
-                                    </div>
-                                    <div className="p-4 flex-1 flex flex-col">
-                                        <h3 className="text-lg font-bold text-white mb-2">{course.title}</h3>
-                                        <p className="text-sm text-gray-300 mb-4 line-clamp-2">{course.description}</p>
-                                        <div className="mt-auto">
-                                            <Button
-                                                onClick={() => handleActivateCourse(course._id)}
-                                                isLoading={loading}
-                                                className="w-full"
-                                            >
-                                                Activate & Create Classroom
-                                            </Button>
+                            {Array.isArray(courses) && courses.map(course => (
+                                course && (
+                                    <div key={course._id} className="bg-white/10 border border-white/10 rounded-xl overflow-hidden hover:bg-white/15 transition flex flex-col">
+                                        <div className="h-40 bg-gray-800 relative">
+                                            {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
+                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
+                                            )}
+                                        </div>
+                                        <div className="p-4 flex-1 flex flex-col">
+                                            <h3 className="text-lg font-bold text-white mb-2">{course.title}</h3>
+                                            <p className="text-sm text-gray-300 mb-4 line-clamp-2">{course.description}</p>
+                                            <div className="mt-auto">
+                                                <Button
+                                                    onClick={() => handleActivateCourse(course._id)}
+                                                    isLoading={loading}
+                                                    className="w-full"
+                                                >
+                                                    Activate & Create Classroom
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )
                             ))}
-                            {courses.length === 0 && <p className="text-gray-400">No courses available to activate.</p>}
+                            {(!Array.isArray(courses) || courses.length === 0) && <p className="text-gray-400">No courses available to activate.</p>}
                         </div>
                     )}
 
                     {activeTab === 'classrooms' && !selectedClassroom && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {myClassrooms.map(classroom => (
-                                <div key={classroom._id} className="bg-white/10 border border-white/10 rounded-xl p-6 hover:bg-white/15 transition cursor-pointer" onClick={() => setSelectedClassroom(classroom)}>
-                                    <h3 className="text-xl font-bold text-white mb-2">{classroom.course?.title}</h3>
-                                    <p className="text-sm text-gray-300 mb-4">Students: {classroom.students?.length} / 20</p>
-                                    <div className="text-xs text-blue-300 uppercase tracking-wider font-semibold">Status: {classroom.isActive ? 'Active' : 'Inactive'}</div>
-                                    <button className="mt-4 text-sm text-space-light hover:underline">Manage Syllabus &rarr;</button>
-                                </div>
+                            {Array.isArray(myClassrooms) && myClassrooms.map(classroom => (
+                                classroom && (
+                                    <div key={classroom._id} className="bg-white/10 border border-white/10 rounded-xl p-6 hover:bg-white/15 transition cursor-pointer" onClick={() => setSelectedClassroom(classroom)}>
+                                        <h3 className="text-xl font-bold text-white mb-2">{classroom.course?.title}</h3>
+                                        <p className="text-sm text-gray-300 mb-4">Students: {classroom.students?.length || 0} / 20</p>
+
+                                        {classroom.students && classroom.students.length > 0 && (
+                                            <div className="mb-4 bg-black/20 p-3 rounded text-sm">
+                                                <p className="text-gray-400 text-xs uppercase mb-2">Enrolled Students:</p>
+                                                <ul className="space-y-1">
+                                                    {classroom.students.slice(0, 3).map(student => (
+                                                        student && (
+                                                            <li key={student._id} className="text-white flex items-center gap-2">
+                                                                <div className="w-5 h-5 rounded-full bg-space-light/20 flex items-center justify-center text-[10px] overflow-hidden">
+                                                                    {student.profilePicture && student.profilePicture !== 'default-profile.png' ?
+                                                                        <img src={`http://localhost:5000/uploads/${student.profilePicture}`} alt={student.name} className="w-full h-full object-cover" /> :
+                                                                        (student.name?.charAt(0) || '?')
+                                                                    }
+                                                                </div>
+                                                                {student.name}
+                                                            </li>
+                                                        )
+                                                    ))}
+                                                    {classroom.students.length > 3 && <li className="text-gray-500 text-xs italic">+{classroom.students.length - 3} more</li>}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        <div className="text-xs text-blue-300 uppercase tracking-wider font-semibold">Status: {classroom.isActive ? 'Active' : 'Inactive'}</div>
+                                        <button className="mt-4 text-sm text-space-light hover:underline">Manage Syllabus &rarr;</button>
+                                    </div>
+                                )
                             ))}
-                            {myClassrooms.length === 0 && <p className="text-gray-400">You haven't activated any classrooms yet.</p>}
+                            {(!Array.isArray(myClassrooms) || myClassrooms.length === 0) && <p className="text-gray-400">You haven't activated any classrooms yet.</p>}
                         </div>
                     )}
 
@@ -177,36 +216,71 @@ const MentorDashboard = () => {
                             <button onClick={() => setSelectedClassroom(null)} className="mb-4 text-sm text-gray-400 hover:text-white">&larr; Back to Classrooms</button>
                             <h2 className="text-2xl font-bold text-white mb-6">Managing: {selectedClassroom.course?.title}</h2>
 
-                            <div className="space-y-6">
-                                {selectedClassroom.syllabus.map((module, mIndex) => (
-                                    <div key={module._id} className="bg-black/20 rounded-lg p-4 border border-white/5">
-                                        <h3 className="text-lg font-semibold text-space-light mb-3">Module {mIndex + 1}: {module.title}</h3>
-                                        <div className="space-y-3 pl-4 border-l-2 border-white/10">
-                                            {module.topics.map(topic => (
-                                                <div key={topic._id} className="bg-white/5 p-3 rounded hover:bg-white/10 transition">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h4 className="font-medium text-white">{topic.title}</h4>
-                                                            <p className="text-xs text-gray-400 mt-1 line-clamp-1">{topic.content}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => handleEditTopic(module, topic)}
-                                                            className="text-xs bg-blue-600/50 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                            <div className="mb-8 bg-black/20 border border-white/5 rounded-lg p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4">Enrolled Learners ({selectedClassroom.students?.length || 0})</h3>
+                                {(!selectedClassroom.students || selectedClassroom.students.length === 0) ? (
+                                    <p className="text-gray-400 italic">No students enrolled yet.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {selectedClassroom.students.map(student => (
+                                            student && (
+                                                <div key={student._id} className="flex items-center gap-3 bg-white/5 p-3 rounded hover:bg-white/10 transition group">
+                                                    <div className="w-10 h-10 rounded-full bg-space-light/20 flex items-center justify-center text-sm font-bold overflow-hidden">
+                                                        {student.profilePicture && student.profilePicture !== 'default-profile.png' ?
+                                                            <img src={`http://localhost:5000/uploads/${student.profilePicture}`} alt={student.name} className="w-full h-full object-cover" /> :
+                                                            (student.name?.charAt(0) || '?')
+                                                        }
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-white font-medium">{student.name}</p>
+                                                        <a
+                                                            href={`/profile/${student._id}`}
+                                                            className="text-xs text-space-light hover:underline opacity-0 group-hover:opacity-100 transition"
+                                                            onClick={(e) => { e.stopPropagation(); }}
                                                         >
-                                                            Edit Content
-                                                        </button>
+                                                            View Profile
+                                                        </a>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            )
+                                        ))}
                                     </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-6">
+                                {Array.isArray(selectedClassroom.syllabus) && selectedClassroom.syllabus.map((module, mIndex) => (
+                                    module && (
+                                        <div key={module._id} className="bg-black/20 rounded-lg p-4 border border-white/5">
+                                            <h3 className="text-lg font-semibold text-space-light mb-3">Module {mIndex + 1}: {module.title}</h3>
+                                            <div className="space-y-3 pl-4 border-l-2 border-white/10">
+                                                {Array.isArray(module.topics) && module.topics.map(topic => (
+                                                    topic && (
+                                                        <div key={topic._id} className="bg-white/5 p-3 rounded hover:bg-white/10 transition">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="font-medium text-white">{topic.title}</h4>
+                                                                    <p className="text-xs text-gray-400 mt-1 line-clamp-1">{topic.content}</p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleEditTopic(module, topic)}
+                                                                    className="text-xs bg-blue-600/50 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                                                                >
+                                                                    Edit Content
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )
                                 ))}
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Edit Modal / Overlay */}
                 {editingTopic && (
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-2xl shadow-2xl">
