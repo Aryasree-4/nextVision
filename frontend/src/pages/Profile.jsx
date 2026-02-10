@@ -16,6 +16,7 @@ const Profile = () => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const isSelf = !id || (currentUser && id === currentUser._id);
 
@@ -24,6 +25,14 @@ const Profile = () => {
             fetchProfile();
         }
     }, [id, currentUser]);
+
+    // Clear success message after 5 seconds
+    useEffect(() => {
+        if (success) {
+            const timer = setTimeout(() => setSuccess(''), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [success]);
 
     const fetchProfile = async () => {
         const profileId = id || currentUser?._id;
@@ -58,6 +67,8 @@ const Profile = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
+        setSuccess('');
 
         const formData = new FormData();
         formData.append('bio', bio);
@@ -73,9 +84,12 @@ const Profile = () => {
             }
             setIsEditing(false);
             setPreviewUrl(null);
+            setSelectedFile(null);
+            setSuccess('Mission updated successfully! Status: Optimal.');
             setError('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update profile');
+            console.error('Update Profile Error:', err);
+            setError(err.response?.data?.message || 'Failed to update profile. Check engine parameters.');
         } finally {
             setLoading(false);
         }
@@ -114,6 +128,13 @@ const Profile = () => {
                 {error && (
                     <div className="bg-red-500/20 border border-red-500/50 text-red-100 p-4 rounded-xl mb-8 animate-pulse shadow-lg flex items-center gap-3">
                         <span className="text-xl">⚠️</span> {error}
+                    </div>
+                )}
+
+                {/* Success Pulse */}
+                {success && (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-100 p-4 rounded-xl mb-8 animate-bounce shadow-lg flex items-center gap-3">
+                        <span className="text-xl">✅</span> {success}
                     </div>
                 )}
 

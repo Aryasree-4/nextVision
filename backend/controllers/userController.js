@@ -89,51 +89,65 @@ const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 const updateUserProfile = async (req, res) => {
     try {
-        console.log('Update Profile Request:', { body: req.body, file: req.file ? req.file.filename : 'none' });
-        const user = await User.findById(req.session.userId).select('+password');
+        console.log('--- Profile Update Attempt ---');
+        console.log('User ID from Session:', req.session.userId);
+        console.log('Request Body:', req.body);
+        console.log('Request File:', req.file ? req.file.filename : 'None');
+
+        if (!req.session.userId) {
+            return res.status(401).json({ message: 'Not authorized, session expired' });
+        }
+
+        const user = await User.findById(req.session.userId);
 
         if (!user) {
-            console.warn('User not found for ID:', req.session.userId);
+            console.warn(`User with ID ${req.session.userId} not found in database`);
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (req.body.bio !== undefined) user.bio = req.body.bio;
+        // Update fields
+        if (req.body.bio !== undefined) {
+            user.bio = req.body.bio;
+        }
 
         if (req.file) {
-            console.log('New file uploaded:', req.file.filename);
+            console.log('Processing new profile picture:', req.file.filename);
+
             // Delete old image if it exists and is not default
             if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
                 const oldPath = path.resolve(__dirname, '..', 'public', 'uploads', user.profilePicture);
-                console.log('Attempting to delete old profile pic at:', oldPath);
                 if (fs.existsSync(oldPath)) {
                     try {
                         fs.unlinkSync(oldPath);
-                        console.log('Old profile pic deleted successfully');
+                        console.log('Successfully removed old profile picture:', user.profilePicture);
                     } catch (err) {
-                        console.error('Failed to delete old profile pic:', err);
+                        console.error('Error deleting old profile picture:', err.message);
                     }
-                } else {
-                    console.log('Old profile pic not found on disk, skipping deletion');
                 }
             }
             user.profilePicture = req.file.filename;
         }
 
-        await user.save();
-        console.log('Profile updated successfully for user:', user.email);
+        const updatedUser = await user.save();
+        console.log('Profile updated successfully for:', updatedUser.email);
 
         res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            bio: user.bio,
-            profilePicture: user.profilePicture
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            bio: updatedUser.bio,
+            profilePicture: updatedUser.profilePicture,
+            message: 'Profile updated successfully'
         });
 
     } catch (error) {
-        console.error('Update Profile Error Stack:', error.stack);
-        res.status(500).json({ message: 'Server error while updating profile', error: error.message });
+        console.error('CRITICAL: Profile Update Error:', error);
+        res.status(500).json({
+            message: 'Server error while updating profile',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
