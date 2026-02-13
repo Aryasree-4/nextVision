@@ -1,6 +1,7 @@
 const Classroom = require('../models/Classroom');
 const Course = require('../models/Course');
 const User = require('../models/User');
+const Progress = require('../models/Progress');
 
 // @desc    Activate a course (Create Classroom for Mentor)
 // @route   POST /api/classrooms/activate
@@ -162,10 +163,22 @@ const enrollStudent = async (req, res) => {
         const { courseId } = req.body;
         const studentId = req.session.userId;
 
+        // --- ENROLLMENT RULE: One course at a time ---
+        const activeProgress = await Progress.findOne({
+            studentId,
+            isCourseCompleted: false
+        });
+
+        if (activeProgress) {
+            return res.status(400).json({
+                message: 'Enrollment Blocked: You can only register for one course at a time. Please complete or withdraw from your current subject before starting a new one.'
+            });
+        }
+        // --- END RULE ---
+
         const existingEnrollment = await Classroom.findOne({
             course: courseId,
-            students: studentId,
-            isActive: true
+            students: studentId
         });
 
         if (existingEnrollment) {
@@ -189,7 +202,6 @@ const enrollStudent = async (req, res) => {
         await targetClassroom.save();
 
         // Initialize Progress
-        const Progress = require('../models/Progress');
         await Progress.create({
             studentId,
             classroomId: targetClassroom._id,
@@ -335,7 +347,6 @@ const unenrollStudent = async (req, res) => {
 const getPerformanceTracking = async (req, res) => {
     try {
         const classroomId = req.params.id;
-        const Progress = require('../models/Progress');
 
         const performanceData = await Progress.find({ classroomId })
             .populate('studentId', 'name email')

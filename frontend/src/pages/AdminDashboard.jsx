@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import ProfileIcon from '../components/ProfileIcon';
+import ConfirmModal from '../components/ConfirmModal';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
@@ -22,6 +23,15 @@ const AdminDashboard = () => {
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'learner' });
     const [showReassignModal, setShowReassignModal] = useState(false);
     const [reassignData, setReassignData] = useState({ studentId: '', fromClassroomId: '', toClassroomId: '' });
+
+    // Confirm Modals State
+    const [confirmState, setConfirmState] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger'
+    });
 
     useEffect(() => {
         fetchData();
@@ -49,14 +59,20 @@ const AdminDashboard = () => {
 
     // --- Course Handlers ---
     const handleDeleteCourse = async (id) => {
-        if (window.confirm('Are you sure you want to delete this course?')) {
-            try {
-                await api.delete(`/courses/${id}`);
-                setCourses(prev => prev.filter(c => c._id !== id));
-            } catch (error) {
-                console.error('Failed to delete course', error);
+        setConfirmState({
+            isOpen: true,
+            title: 'Delete Course?',
+            message: 'This will permanently remove the course and all associated data. This action is irreversible.',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/courses/${id}`);
+                    setCourses(prev => prev.filter(c => c._id !== id));
+                } catch (error) {
+                    console.error('Failed to delete course', error);
+                }
             }
-        }
+        });
     };
 
     // --- User Handlers ---
@@ -73,26 +89,40 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteUser = async (id) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                await api.delete(`/users/${id}`);
-                setUsers(prev => prev.filter(u => u._id !== id));
-            } catch (error) {
-                alert(error.response?.data?.message || 'Failed to delete user');
+        setConfirmState({
+            isOpen: true,
+            title: 'Delete User?',
+            message: 'All access for this user will be revoked. This cannot be undone.',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/users/${id}`);
+                    setUsers(prev => prev.filter(u => u._id !== id));
+                } catch (error) {
+                    setConfirmState(prev => ({ ...prev, isOpen: false }));
+                    alert(error.response?.data?.message || 'Failed to delete user');
+                }
             }
-        }
+        });
     };
 
     // --- Classroom Handlers ---
     const handleDeleteClassroom = async (id) => {
-        if (window.confirm('Deleting a classroom will unenroll all its students. Continue?')) {
-            try {
-                await api.delete(`/classrooms/${id}`);
-                setClassrooms(prev => prev.filter(c => c._id !== id));
-            } catch (error) {
-                alert(error.response?.data?.message || 'Failed to delete classroom');
+        setConfirmState({
+            isOpen: true,
+            title: 'Delete Classroom?',
+            message: 'Deleting a classroom will unenroll all its students. They will need to re-enroll in a different classroom.',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/classrooms/${id}`);
+                    setClassrooms(prev => prev.filter(c => c._id !== id));
+                } catch (error) {
+                    setConfirmState(prev => ({ ...prev, isOpen: false }));
+                    alert(error.response?.data?.message || 'Failed to delete classroom');
+                }
             }
-        }
+        });
     };
 
     const initReassign = (studentId, fromClassroomId, courseId) => {
@@ -104,7 +134,15 @@ const AdminDashboard = () => {
         );
 
         if (targets.length === 0) {
-            alert('No other available classrooms for this course to reassign to.');
+            setConfirmState({
+                isOpen: true,
+                title: 'No Available Rooms',
+                message: 'There are no other classrooms for this course with space to reassign this student.',
+                variant: 'primary',
+                cancelText: 'OK',
+                confirmText: '',
+                onConfirm: () => { }
+            });
             return;
         }
 
@@ -113,17 +151,26 @@ const AdminDashboard = () => {
     };
 
     const handleReassign = async () => {
-        try {
-            await api.put('/classrooms/reassign', {
-                studentId: reassignData.studentId,
-                fromClassroomId: reassignData.fromClassroomId,
-                toClassroomId: reassignData.toClassroomId
-            });
-            setShowReassignModal(false);
-            fetchData();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to reassign student');
-        }
+        setConfirmState({
+            isOpen: true,
+            title: 'Confirm Reassignment',
+            message: 'Student will be moved to the selected classroom immediately.',
+            variant: 'primary',
+            onConfirm: async () => {
+                try {
+                    await api.put('/classrooms/reassign', {
+                        studentId: reassignData.studentId,
+                        fromClassroomId: reassignData.fromClassroomId,
+                        toClassroomId: reassignData.toClassroomId
+                    });
+                    setShowReassignModal(false);
+                    fetchData();
+                } catch (error) {
+                    setConfirmState(prev => ({ ...prev, isOpen: false }));
+                    alert(error.response?.data?.message || 'Failed to reassign student');
+                }
+            }
+        });
     };
 
     if (!user) return null;
@@ -334,7 +381,7 @@ const AdminDashboard = () => {
 
                 {showReassignModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-md animate-scale-up">
                             <h3 className="text-lg font-bold mb-4">Reassign Student</h3>
                             <div className="space-y-4">
                                 <div>
@@ -355,12 +402,23 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className="flex justify-end space-x-3 mt-6">
                                     <button type="button" onClick={() => setShowReassignModal(false)} className="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-                                    <button type="button" onClick={handleReassign} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm Reassign</button>
+                                    <button type="button" onClick={handleReassign} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Proceed to Confirm</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
+
+                <ConfirmModal
+                    isOpen={confirmState.isOpen}
+                    onClose={() => setConfirmState({ ...confirmState, isOpen: false })}
+                    onConfirm={confirmState.onConfirm}
+                    title={confirmState.title}
+                    message={confirmState.message}
+                    variant={confirmState.variant}
+                    confirmText={confirmState.confirmText}
+                    cancelText={confirmState.cancelText}
+                />
             </div>
         </div>
     );

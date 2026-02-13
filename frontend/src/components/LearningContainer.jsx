@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import Button from './Button';
 import QuizInterface from './QuizInterface';
 import api from '../api/axios';
+import { useNotifications } from '../context/NotificationContext';
+import NotificationBoard from './NotificationBoard';
 
 const LearningContainer = ({ classroom, enrollment, onClose }) => {
+    const { unreadCount, setCurrentClassroomId } = useNotifications();
     const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
     const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
     const [showQuiz, setShowQuiz] = useState(false);
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     useEffect(() => {
         fetchProgress();
-    }, []);
+        setCurrentClassroomId(classroom._id);
+        return () => setCurrentClassroomId(null);
+    }, [classroom._id, setCurrentClassroomId]);
 
     const fetchProgress = async () => {
         try {
@@ -21,7 +27,13 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
 
             // Find the furthest unlocked module
             const furthestModule = data.moduleProgress.filter(mp => mp.completed).length;
-            setCurrentModuleIndex(Math.min(furthestModule, classroom.syllabus.length - 1));
+            const targetModuleIndex = Math.min(furthestModule, classroom.syllabus.length - 1);
+
+            // Only reset topic if we actually moved to a different module
+            if (targetModuleIndex !== currentModuleIndex) {
+                setCurrentModuleIndex(targetModuleIndex);
+                setCurrentTopicIndex(0);
+            }
 
             setLoading(false);
         } catch (error) {
@@ -33,9 +45,24 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
     if (loading) return <div className="text-white p-10 text-center">Loading Course Content...</div>;
 
     const currentModule = classroom.syllabus[currentModuleIndex];
-    if (!currentModule) return <div className="text-white">Error: Module not found</div>;
+    if (!currentModule) return <div className="text-white p-10 text-center">Error: Module not found</div>;
 
     const currentTopic = currentModule.topics[currentTopicIndex];
+
+    // Safety check for currentTopic to avoid blank screen/crash
+    if (!currentTopic) {
+        return (
+            <div className="fixed inset-0 bg-space-blue z-[60] flex items-center justify-center p-8">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-white mb-4">Topic not found</h2>
+                    <Button onClick={() => { setCurrentTopicIndex(0); fetchProgress(); }}>
+                        Reload Content
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     const isFirstTopic = currentTopicIndex === 0;
     const isLastTopic = currentTopicIndex === currentModule.topics.length - 1;
     const isLastModule = currentModuleIndex === classroom.syllabus.length - 1;
@@ -118,18 +145,44 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
                         <p className="text-xs text-gray-400">Module {currentModuleIndex + 1}: {currentModule.title}</p>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    {classroom.syllabus.map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={`w-8 h-1 rounded-full ${idx <= currentModuleIndex ? 'bg-space-light' : 'bg-gray-800'}`}
-                        />
-                    ))}
+                <div className="flex items-center gap-4">
+                    {!showQuiz && (
+                        <button
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className={`relative p-2 rounded-full transition-all duration-500 group shadow-lg ${unreadCount > 0
+                                ? 'bg-red-600 text-white ring-4 ring-red-500/20'
+                                : 'bg-emerald-600 text-white ring-4 ring-emerald-500/20'
+                                }`}
+                            title="Classroom Notifications"
+                        >
+                            <span className="text-xl group-hover:scale-110 transition-transform block">
+                                {unreadCount > 0 ? '🔔' : '✔️'}
+                            </span>
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+                    )}
+                    <div className="flex gap-2">
+                        {classroom.syllabus.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`w-8 h-1 rounded-full ${idx <= currentModuleIndex ? 'bg-space-light' : 'bg-gray-800'}`}
+                            />
+                        ))}
+                    </div>
                 </div>
             </header>
 
-            <main className="flex-1 flex items-center justify-center p-8 bg-stars-pattern bg-center">
-                <div className="w-full max-w-3xl aspect-[4/3] bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group transition-all duration-500 hover:bg-white/10">
+            <main className="flex-1 flex items-center justify-center p-8 bg-stars-pattern bg-center relative">
+                <NotificationBoard
+                    isOpen={showNotifications}
+                    onClose={() => setShowNotifications(false)}
+                />
+
+                <div className={`w-full max-w-3xl aspect-[4/3] bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col group transition-all duration-500 hover:bg-white/10 ${showNotifications ? 'blur-sm grayscale-[0.5] scale-[0.98]' : ''}`}>
                     <div className="absolute top-0 left-0 w-1 h-full bg-space-light"></div>
 
                     <div className="p-12 flex-1 overflow-y-auto custom-scrollbar">

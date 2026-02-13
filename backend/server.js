@@ -56,12 +56,14 @@ const courseRoutes = require('./routes/courseRoutes'); // Added course routes
 const classroomRoutes = require('./routes/classroomRoutes');
 const userRoutes = require('./routes/userRoutes');
 const assessmentRoutes = require('./routes/assessmentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); // Added course routes
 app.use('/api/classrooms', classroomRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/assessments', assessmentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Serve static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Added static file serving
@@ -78,6 +80,41 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+// Create HTTP Server
+const http = require('http');
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: (origin, callback) => callback(null, true),
+        credentials: true,
+    }
+});
+
+// Make io globally accessible
+global.io = io;
+
+io.on('connection', (socket) => {
+    console.log('New Socket Connection:', socket.id);
+
+    // Join classroom room
+    socket.on('joinClassroom', (classroomId) => {
+        socket.join(classroomId);
+        console.log(`Socket ${socket.id} joined classroom: ${classroomId}`);
+    });
+
+    socket.on('leaveClassroom', (classroomId) => {
+        socket.leave(classroomId);
+        console.log(`Socket ${socket.id} left classroom: ${classroomId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Socket Disconnected:', socket.id);
+    });
+});
+
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

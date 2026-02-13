@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from '../components/Button';
 import ProfileIcon from '../components/ProfileIcon';
+import { useNotifications } from '../context/NotificationContext';
 
 const MentorDashboard = () => {
     const { user, logout } = useAuth();
@@ -17,6 +18,11 @@ const MentorDashboard = () => {
     const [performanceData, setPerformanceData] = useState([]);
     const [activeSubTab, setActiveSubTab] = useState('syllabus'); // syllabus, performance
     const [editingQuiz, setEditingQuiz] = useState(null); // { moduleIndex, questions }
+
+    const { broadcastNotification } = useNotifications();
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+    const [broadcastMessage, setBroadcastMessage] = useState('');
+    const [broadcastLink, setBroadcastLink] = useState('');
 
     useEffect(() => {
         fetchCourses();
@@ -134,6 +140,23 @@ const MentorDashboard = () => {
             setMessage({ type: 'success', text: data.message });
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Activation failed' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBroadcast = async (e) => {
+        e.preventDefault();
+        if (!selectedClassroom || !broadcastMessage) return;
+        setLoading(true);
+        try {
+            await broadcastNotification(selectedClassroom._id, broadcastMessage, broadcastLink);
+            setMessage({ type: 'success', text: 'Broadcast message sent successfully!' });
+            setBroadcastMessage('');
+            setBroadcastLink('');
+            setShowBroadcastModal(false);
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Failed to send broadcast message' });
         } finally {
             setLoading(false);
         }
@@ -266,19 +289,27 @@ const MentorDashboard = () => {
                         <div>
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold text-white">Managing: {selectedClassroom.course?.title}</h2>
-                                <div className="flex bg-black/20 rounded-lg p-1">
+                                <div className="flex items-center gap-4">
                                     <button
-                                        onClick={() => setActiveSubTab('syllabus')}
-                                        className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'syllabus' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
+                                        onClick={() => setShowBroadcastModal(true)}
+                                        className="bg-space-light hover:bg-space-light/80 text-white px-4 py-2 rounded-md text-sm font-bold shadow-lg shadow-space-light/20 flex items-center gap-2 transition"
                                     >
-                                        Syllabus & Quizzes
+                                        📢 Broadcast Message
                                     </button>
-                                    <button
-                                        onClick={() => { setActiveSubTab('performance'); fetchPerformance(selectedClassroom._id); }}
-                                        className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'performance' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        Performance Tracking
-                                    </button>
+                                    <div className="flex bg-black/20 rounded-lg p-1">
+                                        <button
+                                            onClick={() => setActiveSubTab('syllabus')}
+                                            className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'syllabus' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            Syllabus & Quizzes
+                                        </button>
+                                        <button
+                                            onClick={() => { setActiveSubTab('performance'); fetchPerformance(selectedClassroom._id); }}
+                                            className={`px-4 py-1.5 rounded-md text-sm transition ${activeSubTab === 'performance' ? 'bg-space-light text-white' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            Performance Tracking
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -588,6 +619,52 @@ const MentorDashboard = () => {
                                     Save Changes
                                 </Button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {showBroadcastModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
+                        <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-lg shadow-2xl">
+                            <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                <span className="text-2xl">📢</span> Broadcast to Classroom
+                            </h3>
+                            <form onSubmit={handleBroadcast} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Message</label>
+                                    <textarea
+                                        value={broadcastMessage}
+                                        onChange={(e) => setBroadcastMessage(e.target.value)}
+                                        rows="4"
+                                        className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
+                                        placeholder="Type your announcement here..."
+                                        required
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Attachment Link (Optional)</label>
+                                    <input
+                                        type="url"
+                                        value={broadcastLink}
+                                        onChange={(e) => setBroadcastLink(e.target.value)}
+                                        className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
+                                        placeholder="https://meet.google.com/..."
+                                    />
+                                    <p className="text-[10px] text-gray-500 mt-1">Useful for meeting links or external resources.</p>
+                                </div>
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBroadcastModal(false)}
+                                        className="px-4 py-2 bg-transparent text-gray-300 hover:text-white transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <Button type="submit" isLoading={loading} className="w-auto">
+                                        Send Now
+                                    </Button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}
