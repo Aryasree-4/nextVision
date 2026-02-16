@@ -12,7 +12,13 @@
 }
 
 body {
-  @apply min-h-screen bg-linear-to-br from-space-blue via-[#0f1235] to-black text-white antialiased;
+  @apply min-h-screen bg-linear-to-br from-[#0a0d24] via-space-blue to-[#050614] text-white antialiased;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl;
+  }
 }
 
 @layer utilities {

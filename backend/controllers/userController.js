@@ -67,7 +67,7 @@ const deleteUser = async (req, res) => {
         await user.deleteOne();
         res.status(200).json({ message: 'User removed' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({ message: 'Server error               ', error: error.message });
     }
 };
 

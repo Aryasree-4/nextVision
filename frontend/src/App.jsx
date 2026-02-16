@@ -8,6 +8,7 @@ import AdminCourseForm from './pages/AdminCourseForm';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
+import Resignation from './pages/Resignation';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
 
       <Route element={<ProtectedRoute allowedRoles={['mentor']} />}>
         <Route path="/mentor-dashboard" element={<MentorDashboard />} />
+        <Route path="/resignation" element={<Resignation />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

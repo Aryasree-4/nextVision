@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from '../components/Button';
@@ -183,6 +184,12 @@ const MentorDashboard = () => {
                     </div>
                     <div className="flex items-center gap-6">
                         <ProfileIcon />
+                        <Link
+                            to="/resignation"
+                            className="px-4 py-2 bg-yellow-600/20 text-yellow-500 border border-yellow-600/30 rounded hover:bg-yellow-600/30 transition text-sm font-bold"
+                        >
+                            Resign Now
+                        </Link>
                         <button
                             onClick={logout}
                             className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
