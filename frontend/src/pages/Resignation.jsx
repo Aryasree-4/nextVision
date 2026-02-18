@@ -4,7 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
-import Logo from '../components/Logo';
+import SpaceBackground from '../components/SpaceBackground';
+import GlassCard from '../components/GlassCard';
+import Button from '../components/Button';
 
 const Resignation = () => {
     const { user, logout } = useAuth();
@@ -157,63 +159,70 @@ const Resignation = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-linear-to-br from-[#0a0d24] via-space-blue to-[#050614]">
-            <Logo className="mb-12 h-12 w-auto" />
+        <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-6 font-body">
+            <SpaceBackground mode="interactive" />
 
-            <div className="max-w-2xl w-full glass-card p-12 text-center border-white/20">
-                <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl">
-                    🌟
-                </div>
-                <h1 className="text-4xl font-bold text-white mb-6">Thank You, {user.name}</h1>
-                <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                    Your contribution to NextVision has been invaluable. You've inspired learners
-                    and helped us grow. We are truly grateful for your service and dedication.
-                </p>
-
-                <div className="flex flex-col gap-6">
-                    <div className="bg-white/5 p-6 rounded-xl border border-white/10">
-                        <p className="text-sm text-gray-400 mb-4">
-                            Before you go, please download your official Experience Certificate.
-                        </p>
-                        <button
-                            onClick={() => generateCertificate(false)}
-                            disabled={isGenerating}
-                            className="bg-space-light hover:bg-space-light/80 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-space-light/20 transition flex items-center justify-center gap-2 mx-auto"
-                        >
-                            {isGenerating ? 'Generating...' : '📥 Download Experience Certificate'}
-                        </button>
+            <div className="max-w-2xl w-full relative z-10 px-4">
+                <GlassCard className="p-10 md:p-16 text-center animate-scale-in" hover={false}>
+                    <div className="w-24 h-24 bg-space-accent/10 border border-space-accent/20 rounded-full flex items-center justify-center mx-auto mb-10 text-5xl shadow-[0_0_50px_rgba(0,240,255,0.15)] animate-float">
+                        <span className="drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">✨</span>
                     </div>
 
-                    {error && (
-                        <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-4 rounded-lg text-sm">
-                            {error}
+                    <h1 className="text-4xl font-black text-white mb-6 uppercase tracking-tight">Final Appreciation</h1>
+                    <p className="text-[10px] text-space-accent font-black uppercase tracking-[0.3em] mb-8">Personnel: {user.name}</p>
+
+                    <p className="text-lg text-gray-300 mb-12 leading-relaxed font-medium">
+                        Your contribution to the <span className="text-white font-bold">NextVision Collective</span> has been instrumental.
+                        As you prepare for your next deployment, we acknowledge your dedication to the progression of knowledge.
+                    </p>
+
+                    <div className="space-y-8">
+                        <div className="bg-white/5 p-8 rounded-2xl border border-white/10 group hover:border-space-accent/30 transition-all duration-500">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6">Credential Acquisition Phase</p>
+                            <Button
+                                onClick={() => generateCertificate(false)}
+                                disabled={isGenerating}
+                                className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em]"
+                            >
+                                {isGenerating ? 'Processing Data...' : 'SECURE EXPERIENCE CERTIFICATE'}
+                            </Button>
+                            <p className="text-[10px] text-gray-600 mt-4 italic">Recommended: Backup your service record before departure.</p>
                         </div>
-                    )}
 
-                    <div className="pt-8 border-t border-white/10">
-                        <p className="text-xs text-gray-500 mb-4 uppercase tracking-widest">Permanent Action</p>
-                        <button
-                            onClick={handleLeavePlatform}
-                            disabled={loading}
-                            className={`w-full py-4 rounded-xl font-bold transition-all border ${loading
-                                ? 'bg-gray-700 text-gray-500 border-transparent'
-                                : 'bg-red-600/10 text-red-500 border-red-600/20 hover:bg-red-600 hover:text-white'
-                                }`}
-                        >
-                            {loading ? 'Processing Resignation...' : 'Leave Platform Permanently'}
-                        </button>
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="mt-4 text-sm text-gray-400 hover:text-white transition"
-                        >
-                            Wait, I changed my mind. Go back to Dashboard.
-                        </button>
+                        {error && (
+                            <div className="bg-error/10 border border-error/20 text-error p-4 rounded-xl text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                System Alert: {error}
+                            </div>
+                        )}
+
+                        <div className="pt-10 border-t border-white/5 space-y-6">
+                            <div className="space-y-2">
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-error/60">Critical Operation</p>
+                                <button
+                                    onClick={handleLeavePlatform}
+                                    disabled={loading}
+                                    className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border ${loading
+                                        ? 'bg-gray-800 text-gray-600 border-transparent'
+                                        : 'bg-error/5 text-error border-error/20 hover:bg-error hover:text-white hover:shadow-[0_0_30px_rgba(255,59,48,0.3)]'
+                                        }`}
+                                >
+                                    {loading ? 'Executing Purge Sequence...' : 'LEAVE PLATFORM PERMANENTLY'}
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-space-accent transition-all"
+                            >
+                                &#8212; ABORT DISCONNECT & RETURN TO COMMAND &#8212;
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </GlassCard>
             </div>
 
-            <div className="mt-12 text-gray-500 text-sm">
-                NextVision Ed-Tech Platform • Wishing you success in your future endeavors.
+            <div className="mt-12 text-gray-600 text-[10px] font-black uppercase tracking-[0.4em] relative z-10">
+                NextVision &bull; Knowledge Progression Engine
             </div>
         </div>
     );

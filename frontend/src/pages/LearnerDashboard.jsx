@@ -5,6 +5,8 @@ import ProfileIcon from '../components/ProfileIcon';
 import Button from '../components/Button';
 import LearningContainer from '../components/LearningContainer';
 import ConfirmModal from '../components/ConfirmModal';
+import SpaceBackground from '../components/SpaceBackground';
+import GlassCard from '../components/GlassCard';
 
 const LearnerDashboard = () => {
     const { user, logout } = useAuth();
@@ -65,7 +67,7 @@ const LearnerDashboard = () => {
         setMessage({ type: '', text: '' });
         try {
             await api.post('/classrooms/unenroll', { classroomId: unenrollTarget });
-            setMessage({ type: 'success', text: 'Successfully withdrawn from the course. You can now enroll in a new subject.' });
+            setMessage({ type: 'success', text: 'Successfully withdrawn from the course.' });
             fetchMyEnrollments();
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to quit course.' });
@@ -80,120 +82,114 @@ const LearnerDashboard = () => {
         return myEnrollments.some(enrollment => enrollment && enrollment.course?._id === courseId);
     };
 
-    // Check if user has ANY incomplete enrollment
-    const hasActiveEnrollment = Array.isArray(myEnrollments) && myEnrollments.some(e => {
-        // We'll need to check the Progress model eventually, but for now 
-        // we can assume if they are in an enrollment listed here, it's active.
-        // Unless we add a status field to Enrollment/Classroom.
-        // Actually, the server rule checks for 'isCourseCompleted: false' in Progress.
-        // For the UI, we'll just check if they are in ANY course.
-        return true; // Simplified for now, will refine if there's a completion flag on enrollment
-    }) && myEnrollments.length > 0;
+    const hasActiveEnrollment = Array.isArray(myEnrollments) && myEnrollments.length > 0;
 
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-transparent p-8">
-            <div className="max-w-7xl mx-auto">
-                <header className="flex justify-between items-center mb-8 bg-space-blue/50 backdrop-blur-md p-6 rounded-lg text-white shadow-md border border-white/10">
-                    <div>
-                        <h1 className="text-3xl font-bold">Learner Dashboard</h1>
-                        <p className="text-gray-300">Welcome, {user?.name}</p>
+        <div className="min-h-screen px-6 py-10 relative overflow-hidden font-body">
+            <SpaceBackground mode="static" />
+
+            <div className="max-w-7xl mx-auto space-y-12">
+                <GlassCard className="p-8 flex flex-col md:flex-row justify-between items-center gap-6" hover={false}>
+                    <div className="text-center md:text-left">
+                        <h1 className="text-4xl font-extrabold text-white tracking-tight mb-1">Learner Dashboard</h1>
+                        <p className="text-gray-400 font-light tracking-wide">Welcome back, <span className="text-space-light font-medium">{user?.name}</span>.</p>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <ProfileIcon />
+                    <div className="flex items-center gap-8">
+                        <div className="glass-panel p-1.5 rounded-full border-white/10">
+                            <ProfileIcon />
+                        </div>
                         <button
                             onClick={logout}
-                            className="px-4 py-2 bg-red-600/90 text-white rounded hover:bg-red-700 transition shadow-sm backdrop-blur-sm"
+                            className="text-gray-500 hover:text-error text-xs font-black uppercase tracking-[0.2em] transition-colors"
                         >
                             Logout
                         </button>
                     </div>
-                </header>
+                </GlassCard>
 
                 {message.text && (
-                    <div className={`mb-8 p-4 rounded-xl border animate-fade-in ${message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-200' : 'bg-green-500/10 border-green-500/20 text-green-200'} backdrop-blur-md shadow-lg`}>
-                        {message.type === 'error' ? '❌' : '✅'} {message.text}
+                    <div className={`p-4 rounded-xl border animate-fade-in ${message.type === 'error' ? 'bg-error/10 border-error/20 text-error' : 'bg-success/10 border-success/20 text-success'} backdrop-blur-md shadow-lg flex items-center gap-3 text-sm`}>
+                        <span>{message.type === 'error' ? '❌' : '✅'}</span>
+                        {message.text}
                     </div>
                 )}
 
                 {/* --- MY LEARNING JOURNEY --- */}
                 {Array.isArray(myEnrollments) && myEnrollments.length > 0 && (
-                    <div className="mb-12 animate-fade-in">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="h-8 w-1.5 bg-space-light rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
-                            <h2 className="text-2xl font-bold text-white tracking-tight">My Learning Journey</h2>
+                    <section className="animate-fade-in">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="h-6 w-1 bg-space-light rounded-full"></div>
+                            <h2 className="text-xl font-bold text-white tracking-[0.1em] uppercase">My Courses</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {myEnrollments.map(enrollment => {
                                 if (!enrollment || !enrollment.course) return null;
                                 const course = enrollment.course;
                                 return (
-                                    <div key={enrollment._id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-500 group shadow-2xl relative">
-                                        <div className="h-40 bg-gray-900 relative">
+                                    <GlassCard key={enrollment._id} className="overflow-hidden flex flex-col h-full group">
+                                        <div className="h-44 bg-gray-900 relative">
                                             {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
-                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80" />
+                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-700" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-700">
-                                                    <span className="text-4xl">🚀</span>
-                                                </div>
+                                                <div className="w-full h-full flex items-center justify-center text-white/10 text-6xl">🚀</div>
                                             )}
-                                            <div className="absolute top-3 right-3 bg-space-light/20 backdrop-blur-md text-space-light border border-space-light/30 text-[10px] tracking-widest font-black px-3 py-1 rounded-full shadow-lg">
-                                                IN PROGRESS
+                                            <div className="absolute top-4 right-4 bg-space-navy/80 backdrop-blur-md text-space-light border border-space-light/20 text-[10px] tracking-[0.2em] font-black px-4 py-1.5 rounded-full uppercase shadow-xl">
+                                                In Progress
                                             </div>
                                         </div>
 
-                                        <div className="p-6">
-                                            <div className="mb-4">
-                                                <h4 className="text-lg font-bold text-white mb-1 group-hover:text-space-light transition-colors">{course.title}</h4>
-                                                <p className="text-xs text-gray-500 font-medium italic">Mentor: {enrollment.mentor?.name || 'TBA'}</p>
+                                        <div className="p-8 flex-1 flex flex-col">
+                                            <div className="mb-8">
+                                                <h4 className="text-xl font-bold text-white mb-2 leading-tight group-hover:text-space-light transition-colors">{course.title}</h4>
+                                                <p className="text-xs text-gray-500 font-medium">Mentor: {enrollment.mentor?.name || 'TBA'}</p>
                                             </div>
 
-                                            <div className="flex flex-col gap-3 pt-4 border-t border-white/5">
-                                                <button
+                                            <div className="flex flex-col gap-4 mt-auto">
+                                                <Button
                                                     onClick={() => setSelectedEnrollment(enrollment)}
-                                                    className="w-full py-3 bg-space-light text-white rounded-xl font-bold hover:bg-space-light/80 transition-all shadow-[0_4px_20px_rgba(59,130,246,0.3)] active:scale-95 flex items-center justify-center gap-2"
+                                                    className="w-full py-4 text-xs font-black uppercase tracking-[0.2em]"
                                                 >
-                                                    <span>Continue Learning</span>
-                                                    <span className="text-lg">→</span>
-                                                </button>
+                                                    Continue Learning
+                                                </Button>
                                                 <button
                                                     onClick={() => {
                                                         setUnenrollTarget(enrollment._id);
                                                         setShowUnenrollConfirm(true);
                                                     }}
-                                                    className="w-full py-2 text-[10px] font-bold text-gray-500 hover:text-red-400 uppercase tracking-widest transition-colors text-center"
+                                                    className="w-full py-2 text-[10px] font-bold text-gray-600 hover:text-error uppercase tracking-[0.2em] transition-colors"
                                                 >
-                                                    Withdraw from Course
+                                                    Leave Course
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
+                                    </GlassCard>
                                 );
                             })}
                         </div>
-                    </div>
+                    </section>
                 )}
 
                 {/* --- AVAILABLE COURSES --- */}
-                <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-8 border border-white/5 min-h-[400px]">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-white/5 pb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-white tracking-tight">Explore More Courses</h2>
-                            <p className="text-sm text-gray-500 mt-1">Discover new skills and broaden your horizons.</p>
+                <section className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-white/5 pb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="h-6 w-1 bg-white/10 rounded-full"></div>
+                            <h2 className="text-xl font-bold text-white tracking-[0.1em] uppercase">Available Classes</h2>
                         </div>
                         {hasActiveEnrollment && (
-                            <div className="text-[10px] tracking-tighter font-bold text-amber-500 bg-amber-500/5 px-6 py-2 rounded-2xl border border-amber-500/20 shadow-inner flex items-center gap-2">
-                                <span className="text-base leading-none">🔒</span> ENROLLMENT LOCKED: COMPLETE YOUR ACTIVE SUBJECT FIRST
+                            <div className="text-[10px] tracking-widest font-black text-warning bg-warning/5 px-6 py-2.5 rounded-full border border-warning/10 flex items-center gap-3 uppercase">
+                                <span>🔒</span> Concurrent Pathways Restricted
                             </div>
                         )}
                     </div>
 
                     {(!Array.isArray(courses) || courses.filter(c => !isEnrolled(c?._id)).length === 0) ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white/2 rounded-2xl border border-dashed border-white/10 text-center">
-                            <span className="text-5xl mb-4 opacity-20">🎓</span>
-                            <p className="text-gray-500 font-medium">No new courses available to join right now.</p>
+                        <div className="flex flex-col items-center justify-center py-24 glass-panel border-dashed text-center opacity-40">
+                            <span className="text-6xl mb-6">🔭</span>
+                            <p className="text-gray-400 font-light">No new classes available at this time.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -202,29 +198,25 @@ const LearnerDashboard = () => {
                                 const isLocked = hasActiveEnrollment;
 
                                 return (
-                                    <div key={course._id} className={`bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-300 group flex flex-col h-full ${isLocked ? 'opacity-60' : 'hover:shadow-xl hover:-translate-y-1'}`}>
+                                    <GlassCard key={course._id} className={`flex flex-col h-full group ${isLocked ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
                                         <div className="h-44 bg-gray-900 relative overflow-hidden">
                                             {course.coverImage && course.coverImage !== 'no-photo.jpg' ? (
-                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" />
+                                                <img src={`http://localhost:5000/uploads/${course.coverImage}`} alt={course.title} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-all duration-700" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-space-blue/20">
-                                                    <span className="text-4xl opacity-10">📖</span>
-                                                </div>
+                                                <div className="w-full h-full flex items-center justify-center text-white/5 text-6xl">📖</div>
                                             )}
                                             {isLocked && (
-                                                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
-                                                    <div className="bg-black/60 p-3 rounded-full border border-white/10 shadow-2xl">
-                                                        <span className="text-2xl leading-none">🔒</span>
-                                                    </div>
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <span className="text-4xl">🔒</span>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="p-6 flex-1 flex flex-col">
-                                            <h4 className="text-lg font-bold text-white mb-2 leading-tight group-hover:text-space-light transition-colors">{course.title}</h4>
-                                            <p className="text-xs text-gray-500 line-clamp-3 mb-6 flex-grow leading-relaxed font-medium">{course.description}</p>
+                                        <div className="p-8 flex-1 flex flex-col">
+                                            <h4 className="text-xl font-bold text-white mb-3 leading-tight group-hover:text-space-light transition-colors">{course.title}</h4>
+                                            <p className="text-sm text-gray-500 line-clamp-3 mb-8 flex-grow leading-relaxed font-light">{course.description}</p>
 
-                                            <div className="flex justify-between items-center mb-6 pt-4 border-t border-white/5">
-                                                <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
+                                            <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+                                                <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
                                                     {course.modules?.length || 0} Modules
                                                 </span>
                                             </div>
@@ -232,18 +224,19 @@ const LearnerDashboard = () => {
                                             <Button
                                                 onClick={() => handleEnroll(course._id)}
                                                 isLoading={loading}
-                                                className={`w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${isLocked ? 'bg-gray-800/50 text-gray-500 cursor-not-allowed border-none' : 'bg-white/10 hover:bg-white/20 text-white'}`}
                                                 disabled={isLocked}
+                                                variant={isLocked ? 'secondary' : 'primary'}
+                                                className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em]"
                                             >
-                                                {isLocked ? 'Pathway Locked' : 'Start Journey'}
+                                                {isLocked ? 'Class Locked' : 'Join Class'}
                                             </Button>
                                         </div>
-                                    </div>
+                                    </GlassCard>
                                 );
                             })}
                         </div>
                     )}
-                </div>
+                </section>
 
                 {selectedEnrollment && (
                     <LearningContainer
@@ -256,14 +249,13 @@ const LearnerDashboard = () => {
                     />
                 )}
 
-                {/* Modern Confirmation Modal */}
                 <ConfirmModal
                     isOpen={showUnenrollConfirm}
                     onClose={() => setShowUnenrollConfirm(false)}
                     onConfirm={handleUnenroll}
-                    title="Withdraw from Course?"
-                    message="You will lose your progress and your priority spot in the classroom. This action cannot be undone."
-                    confirmText="Yes, Withdraw"
+                    title="Leave Learning Course?"
+                    message="You will lose access to this course content. You can re-enroll later."
+                    confirmText="Leave Course"
                     variant="danger"
                 />
             </div>

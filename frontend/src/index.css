@@ -1,33 +1,81 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 @theme {
+  --color-space-navy: #050614;
+  --color-space-blue-dark: #0D1127;
   --color-space-blue: #181E4C;
   --color-space-light: #3B82F6;
-  --color-space-white: #FFFFFF;
-  --color-space-gray: #F3F4F6;
-  --color-space-gray-50: #F9FAFB;
-  --color-admin-pink: #E6A4B4;
-  --color-admin-red: #D95F59;
-  --color-admin-bg: #FFF0F5;
+  --color-space-accent: #6366F1;
+
+  --color-success: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-light: rgba(255, 255, 255, 0.1);
+}
+
+:root {
+  --transition-speed: 200ms;
 }
 
 body {
-  @apply min-h-screen bg-linear-to-br from-[#0a0d24] via-space-blue to-[#050614] text-white antialiased;
+  @apply min-h-screen bg-space-navy text-white font-body antialiased selection:bg-space-light/30;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-heading tracking-tight;
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl;
+  .glass-panel {
+    @apply bg-space-blue-dark/60 backdrop-blur-xl border border-border-subtle rounded-2xl shadow-2xl transition-all duration-200;
+  }
+
+  .glass-panel-hover {
+    @apply hover:bg-space-blue-dark/80 hover:border-border-light hover:-translate-y-1 hover:shadow-space-light/10;
+  }
+
+  .input-field {
+    @apply w-full bg-space-navy/50 border border-border-subtle rounded-xl px-4 py-3 text-white placeholder:text-gray-500 transition-all outline-none focus:border-space-light/50 focus:ring-1 focus:ring-space-light/20 focus:bg-space-navy/80;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-space-light to-space-accent rounded-xl font-semibold text-white shadow-lg shadow-space-light/20 hover:shadow-space-light/40 hover:-translate-y-0.5 active:scale-95 transition-all;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-white/5 border border-border-subtle rounded-xl font-semibold text-white hover:bg-white/10 hover:border-border-light transition-all;
   }
 }
 
 @layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+  .grid-pattern {
+    background-image: linear-gradient(var(--color-border-subtle) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-border-subtle) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  .animate-scale-up {
-    animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -35,11 +83,11 @@ body {
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
+    background: transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-border-light);
     border-radius: 10px;
   }
 
@@ -51,14 +99,16 @@ body {
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes scaleUp {
+@keyframes scaleIn {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -67,5 +117,17 @@ body {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
   }
 }

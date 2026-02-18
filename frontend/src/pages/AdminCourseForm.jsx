@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import SpaceBackground from '../components/SpaceBackground';
+import GlassCard from '../components/GlassCard';
 
 const AdminCourseForm = () => {
     const { id } = useParams(); // If ID exists, we are editing
@@ -98,151 +100,165 @@ const AdminCourseForm = () => {
     };
 
     return (
-        <div className="min-h-screen bg-admin-bg p-8 text-gray-800">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-admin-red">
-                        {isEditMode ? 'Edit Course' : 'Create New Course'}
-                    </h1>
-                    <button
-                        onClick={() => navigate('/admin-dashboard')}
-                        className="text-admin-red hover:underline"
-                    >
-                        &larr; Back to Dashboard
-                    </button>
-                </div>
+        <div className="min-h-screen relative overflow-hidden pb-10 font-body">
+            <SpaceBackground mode="static" />
 
-                <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg border border-admin-pink/20">
-                    {error && <div className="mb-4 text-red-600 text-center">{error}</div>}
+            <div className="max-w-4xl mx-auto px-6 pt-10">
+                <GlassCard className="mb-8" hover={false}>
+                    <div className="flex justify-between items-center p-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-8 w-1 bg-space-accent rounded-full"></div>
+                            <h1 className="text-xl font-black text-white uppercase tracking-tight">
+                                {isEditMode ? 'Modify Mission Data' : 'Initiate New Mission'}
+                            </h1>
+                        </div>
+                        <button
+                            onClick={() => navigate('/admin-dashboard')}
+                            className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                        >
+                            &larr; Return to HQ
+                        </button>
+                    </div>
+                </GlassCard>
 
-                    <div className="space-y-6">
-                        <Input
-                            id="course_title"
-                            label="Course Title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            required
-                        />
+                <GlassCard className="p-8 animate-scale-in" hover={false}>
+                    <form onSubmit={handleSubmit}>
+                        {error && (
+                            <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl text-error text-xs font-bold uppercase tracking-widest text-center">
+                                {error}
+                            </div>
+                        )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-admin-pink focus:ring-admin-pink sm:text-sm p-2 border"
-                                rows="3"
+                        <div className="space-y-6">
+                            <Input
+                                id="course_title"
+                                label="Course Title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
                                 required
                             />
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Cover Image</label>
-                            <input
-                                type="file"
-                                onChange={(e) => setCoverImage(e.target.files[0])}
-                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-admin-pink/10 file:text-admin-red hover:file:bg-admin-pink/20"
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Sector Intelligence Brief</label>
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="input-field min-h-[120px]"
+                                    placeholder="Describe the mission objectives..."
+                                    required
+                                />
+                            </div>
 
-                        <div className="flex items-center">
-                            <input
-                                id="isPublished"
-                                type="checkbox"
-                                checked={isPublished}
-                                onChange={(e) => setIsPublished(e.target.checked)}
-                                className="h-4 w-4 text-admin-red focus:ring-admin-pink border-gray-300 rounded"
-                            />
-                            <label htmlFor="isPublished" className="ml-2 block text-sm text-gray-900">
-                                Publish Course (Visible to Learners)
-                            </label>
-                        </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Mission Visual (Cover Image)</label>
+                                <input
+                                    type="file"
+                                    onChange={(e) => setCoverImage(e.target.files[0])}
+                                    className="input-field file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-space-accent/20 file:text-space-accent hover:file:bg-space-accent/30 cursor-pointer"
+                                />
+                            </div>
 
-                        {/* Modules Section */}
-                        <div className="border-t border-gray-200 pt-6">
-                            <h2 className="text-xl font-semibold text-admin-red mb-4">Course Modules</h2>
+                            <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+                                <input
+                                    id="isPublished"
+                                    type="checkbox"
+                                    checked={isPublished}
+                                    onChange={(e) => setIsPublished(e.target.checked)}
+                                    className="h-5 w-5 rounded border-white/10 bg-black/40 text-space-accent focus:ring-space-accent transition-all cursor-pointer"
+                                />
+                                <label htmlFor="isPublished" className="text-[10px] font-black uppercase tracking-widest text-white cursor-pointer select-none">
+                                    Deploy to Network (Public Visibility)
+                                </label>
+                            </div>
 
-                            {modules.map((module, mIndex) => (
-                                <div key={mIndex} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex-1 mr-4">
-                                            <label className="block text-xs font-medium text-gray-500 uppercase">Module Title</label>
-                                            <input
-                                                type="text"
-                                                value={module.title}
-                                                onChange={(e) => handleModuleChange(mIndex, 'title', e.target.value)}
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-admin-pink focus:ring-admin-pink sm:text-sm p-1 border"
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveModule(mIndex)}
-                                            className="text-red-500 hover:text-red-700 text-sm mt-5"
-                                        >
-                                            Remove Module
-                                        </button>
-                                    </div>
+                            <div className="border-t border-white/10 pt-10">
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="h-5 w-1 bg-space-light rounded-full"></div>
+                                    <h2 className="text-lg font-black text-white uppercase tracking-[0.1em]">Module Configuration</h2>
+                                </div>
 
-                                    {/* Topics */}
-                                    <div className="ml-4 pl-4 border-l-2 border-admin-pink/30">
-                                        {module.topics.map((topic, tIndex) => (
-                                            <div key={tIndex} className="mb-4 p-3 bg-white rounded border border-gray-100">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="block text-xs font-medium text-gray-400 uppercase">Topic {tIndex + 1}</label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveTopic(mIndex, tIndex)}
-                                                        className="text-red-400 hover:text-red-600 text-xs"
-                                                    >
-                                                        Delete Topic
-                                                    </button>
-                                                </div>
-
+                                {modules.map((module, mIndex) => (
+                                    <div key={mIndex} className="mb-8 p-6 bg-white/2 rounded-2xl border border-white/5">
+                                        <div className="flex justify-between items-end mb-6">
+                                            <div className="flex-1 mr-6">
+                                                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Module {mIndex + 1} Identifier</label>
                                                 <input
                                                     type="text"
-                                                    value={topic.title}
-                                                    onChange={(e) => handleTopicChange(mIndex, tIndex, 'title', e.target.value)}
-                                                    placeholder="Topic Title"
-                                                    className="mb-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-admin-pink focus:ring-admin-pink sm:text-sm p-1 border"
-                                                />
-                                                <textarea
-                                                    value={topic.content}
-                                                    onChange={(e) => handleTopicChange(mIndex, tIndex, 'content', e.target.value)}
-                                                    placeholder="Content (Markdown supported)"
-                                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-admin-pink focus:ring-admin-pink sm:text-sm p-2 border h-24 font-mono text-xs"
+                                                    value={module.title}
+                                                    onChange={(e) => handleModuleChange(mIndex, 'title', e.target.value)}
+                                                    className="input-field text-lg font-bold"
                                                 />
                                             </div>
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAddTopic(mIndex)}
-                                            className="text-sm text-admin-red hover:text-admin-pink font-medium"
-                                        >
-                                            + Add Topic
-                                        </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveModule(mIndex)}
+                                                className="text-[10px] font-black uppercase tracking-widest text-error/60 hover:text-error transition-colors mb-3"
+                                            >
+                                                Decommission
+                                            </button>
+                                        </div>
+
+                                        <div className="ml-6 pl-6 border-l border-white/10 space-y-4">
+                                            {module.topics.map((topic, tIndex) => (
+                                                <div key={tIndex} className="p-5 bg-black/40 rounded-xl border border-white/5 group relative">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-space-accent/60">Topic {tIndex + 1} Protocol</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveTopic(mIndex, tIndex)}
+                                                            className="text-[10px] font-black uppercase tracking-widest text-error/40 hover:text-error transition-colors"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+
+                                                    <input
+                                                        type="text"
+                                                        value={topic.title}
+                                                        onChange={(e) => handleTopicChange(mIndex, tIndex, 'title', e.target.value)}
+                                                        placeholder="Topic Title"
+                                                        className="input-field mb-3"
+                                                    />
+                                                    <textarea
+                                                        value={topic.content}
+                                                        onChange={(e) => handleTopicChange(mIndex, tIndex, 'content', e.target.value)}
+                                                        placeholder="Operational Instructions (Markdown enabled)"
+                                                        className="input-field min-h-[100px] font-mono text-xs"
+                                                    />
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddTopic(mIndex)}
+                                                className="text-[10px] font-black uppercase tracking-[0.2em] text-space-accent hover:text-white transition-colors py-2 px-1"
+                                            >
+                                                + Install New Topic
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
 
-                            <button
-                                type="button"
-                                onClick={handleAddModule}
-                                className="w-full py-2 bg-gray-100 text-gray-600 rounded border border-dashed border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition"
-                            >
-                                + Add Module
-                            </button>
-                        </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddModule}
+                                    className="w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 text-gray-500 border border-dashed border-white/10 rounded-xl hover:bg-white/10 hover:text-white transition-all"
+                                >
+                                    + Synchronize New Module
+                                </button>
+                            </div>
 
-                        <div className="pt-6 border-t border-gray-200">
-                            <Button
-                                type="submit"
-                                isLoading={loading}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-admin-red hover:bg-admin-red/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-admin-pink"
-                            >
-                                {isEditMode ? 'Update Course' : 'Create Course'}
-                            </Button>
+                            <div className="pt-10">
+                                <Button
+                                    type="submit"
+                                    isLoading={loading}
+                                    className="w-full py-4 text-xs font-black uppercase tracking-[0.2em]"
+                                >
+                                    {isEditMode ? 'Authorize Database Update' : 'Initialize Mission Deployment'}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </GlassCard>
             </div>
         </div>
     );

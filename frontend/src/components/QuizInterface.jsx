@@ -71,53 +71,84 @@ const QuizInterface = ({ classroomId, moduleIndex, moduleTitle, onComplete }) =>
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    if (loading && !submitted) return <div className="text-white text-center p-10">Preparing Assessment...</div>;
-    if (!quiz && !loading) return <div className="text-white text-center p-10">Quiz not available.</div>;
+    if (loading && !submitted) {
+        return (
+            <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-16 text-center animate-pulse">
+                <div className="w-16 h-16 border-4 border-space-accent/20 border-t-space-accent rounded-full animate-spin mx-auto mb-8"></div>
+                <h2 className="text-xs font-black text-white uppercase tracking-[0.3em]">Synchronizing Parameters</h2>
+                <p className="text-[9px] text-gray-500 mt-4 font-black uppercase tracking-widest">Retrieving module intelligence from sector servers...</p>
+            </div>
+        );
+    }
+
+    if (!quiz && !loading) {
+        return (
+            <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-16 text-center">
+                <div className="text-5xl mb-8 opacity-20">📡</div>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight mb-4">Intelligence Gap</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-10">The assessment stream for this module is currently off-line.</p>
+                <Button onClick={() => window.location.reload()} className="px-10 py-3 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    Re-initialize Comm Link
+                </Button>
+            </div>
+        );
+    }
 
     if (result) {
         return (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center animate-fade-in shadow-2xl">
+            <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-12 text-center animate-scale-in shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-space-light/30"></div>
                 {result.passed ? (
                     <>
-                        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-lg shadow-green-500/20">✓</div>
-                        <h2 className="text-4xl font-bold text-white mb-4">Congratulations!</h2>
-                        <p className="text-gray-300 text-xl mb-8">{result.message}</p>
+                        <div className="w-24 h-24 bg-space-accent/20 border border-space-accent/40 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-[0_0_40px_rgba(0,240,255,0.2)] animate-float">
+                            🛰️
+                        </div>
+                        <h2 className="text-4xl font-black text-white mb-4 uppercase tracking-tight">Mission Success</h2>
+                        <p className="text-gray-400 text-lg mb-10 font-medium uppercase tracking-widest">{result.message}</p>
 
-                        <div className="grid grid-cols-2 gap-4 mb-10 max-w-md mx-auto">
-                            <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                                <p className="text-gray-400 text-xs uppercase mb-1 font-bold">Your Score</p>
-                                <p className="text-3xl font-bold text-white">{result.score} / {result.totalQuestions}</p>
+                        <div className="grid grid-cols-2 gap-6 mb-12 max-w-md mx-auto">
+                            <div className="bg-white/5 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Data Accuracy</p>
+                                <p className="text-3xl font-black text-white">{result.score} / {result.totalQuestions}</p>
                             </div>
-                            <div className="bg-black/20 p-4 rounded-xl border border-white/5">
-                                <p className="text-gray-400 text-xs uppercase mb-1 font-bold">Percentage</p>
-                                <p className="text-3xl font-bold text-white">{result.percentage.toFixed(1)}%</p>
+                            <div className="bg-white/5 p-6 rounded-2xl border border-white/5 shadow-inner">
+                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2">Yield Alpha</p>
+                                <p className="text-3xl font-black text-space-accent">{result.percentage.toFixed(1)}%</p>
                             </div>
                         </div>
 
-                        <div className="text-left mb-10 bg-black/20 rounded-xl p-6 border border-white/5">
-                            <h3 className="text-lg font-bold text-white mb-4">Correct Answers Review:</h3>
-                            <ul className="space-y-3">
+                        <div className="text-left mb-12 bg-black/40 rounded-2xl p-8 border border-white/5">
+                            <h3 className="text-xs font-black text-white mb-6 uppercase tracking-[0.3em] flex items-center gap-3">
+                                <span className="h-1.5 w-1.5 bg-space-accent rounded-full animate-pulse"></span>
+                                intelligence log review
+                            </h3>
+                            <ul className="space-y-4">
                                 {quiz.questions.map((q, idx) => (
-                                    <li key={idx} className="text-sm border-b border-white/5 pb-2">
-                                        <p className="text-gray-400 mb-1">{q.question}</p>
-                                        <p className="text-green-400 font-medium">✓ {result.correctAnswers[idx]}</p>
+                                    <li key={idx} className="border-b border-white/5 pb-4 last:border-0">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 truncate">{q.question}</p>
+                                        <p className="text-xs text-space-accent font-bold">&gt;&gt; VERIFIED: {result.correctAnswers[idx]}</p>
                                     </li>
                                 ))}
                             </ul>
                         </div>
 
-                        <Button onClick={() => onComplete(result)} className="w-full md:w-auto px-12 py-3 rounded-full text-lg shadow-xl translate-y-0 hover:-translate-y-1 transition duration-300">
-                            Next Module &rarr;
+                        <Button onClick={() => onComplete(result)} className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                            Advance to Next Sector &rarr;
                         </Button>
                     </>
                 ) : (
                     <>
-                        <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-lg shadow-red-500/20">✕</div>
-                        <h2 className="text-4xl font-bold text-white mb-4">Keep Going!</h2>
-                        <p className="text-gray-300 text-xl mb-8">{result.message}</p>
-                        <p className="text-gray-500 mb-10">Don't worry, you can retry unlimited times until you pass.</p>
-                        <Button onClick={() => window.location.reload()} className="w-full md:w-auto px-12 py-3 rounded-full text-lg bg-red-600 hover:bg-red-500">
-                            Retry Quiz
+                        <div className="w-24 h-24 bg-error/10 border border-error/30 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-[0_0_40px_rgba(255,59,48,0.2)] animate-pulse">
+                            ⚠️
+                        </div>
+                        <h2 className="text-4xl font-black text-white mb-4 uppercase tracking-tight">Mission Stalled</h2>
+                        <p className="text-gray-400 text-lg mb-8 font-medium uppercase tracking-widest">{result.message}</p>
+                        <p className="text-[10px] text-gray-600 mb-12 uppercase tracking-widest">Re-calibration required. Operational integrity below threshold.</p>
+                        <Button
+                            onClick={() => window.location.reload()}
+                            className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-full bg-error/20 border-error/50 hover:bg-error transition-all"
+                        >
+                            Execute Re-Try Protocol
                         </Button>
                     </>
                 )}
@@ -126,33 +157,40 @@ const QuizInterface = ({ classroomId, moduleIndex, moduleTitle, onComplete }) =>
     }
 
     return (
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-6 bg-black/30 border-b border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl">
-                <div>
-                    <h2 className="text-xl font-bold text-white uppercase tracking-wider">{moduleTitle} Assessment</h2>
-                    <p className="text-xs text-gray-400 mt-1">Answer all questions correctly (Min 50% to pass)</p>
+        <div className="bg-white/2 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col font-body animate-scale-in">
+            <div className="p-8 bg-black/40 border-b border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
+                <div className="flex flex-col">
+                    <h2 className="text-xs font-black text-white uppercase tracking-[0.3em]">{moduleTitle} Evaluation</h2>
+                    <p className="text-[9px] text-gray-500 mt-2 font-black uppercase tracking-widest flex items-center gap-2">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-space-light animate-pulse"></span>
+                        Status: Active Intelligence Audit
+                    </p>
                 </div>
-                <div className={`flex flex-col items-end ${timeLeft < 60 ? 'text-red-500' : 'text-space-light'}`}>
-                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-60 mb-1">Time Remaining</span>
-                    <span className="text-3xl font-mono font-bold">{formatTime(timeLeft)}</span>
+                <div className={`flex flex-col items-end ${timeLeft < 60 ? 'text-error' : 'text-space-accent'}`}>
+                    <span className="text-[9px] uppercase font-black tracking-widest opacity-40 mb-1">Decay Timer</span>
+                    <span className="text-3xl font-black tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                        {formatTime(timeLeft)}
+                    </span>
                 </div>
             </div>
 
-            <div className="p-10 space-y-12 overflow-y-auto max-h-[60vh] custom-scrollbar">
+            <div className="p-12 space-y-16 overflow-y-auto max-h-[60vh] custom-scrollbar">
                 {quiz.questions.map((q, qIndex) => (
-                    <div key={qIndex} className="animate-slide-up" style={{ animationDelay: `${qIndex * 0.1}s` }}>
-                        <h3 className="text-xl text-white font-medium mb-6 flex gap-4">
-                            <span className="text-space-light/40 font-mono">0{qIndex + 1}</span>
-                            {q.question}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div key={qIndex} className="animate-fade-in" style={{ animationDelay: `${qIndex * 0.1}s` }}>
+                        <div className="flex gap-6 items-start mb-8">
+                            <span className="text-[10px] font-black font-mono text-space-accent/40 bg-white/5 px-2 py-1 rounded border border-white/5">0{qIndex + 1}</span>
+                            <h3 className="text-xl text-white font-black uppercase tracking-tight leading-snug">
+                                {q.question}
+                            </h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-14">
                             {q.options.map((opt, oIndex) => (
                                 <label
                                     key={oIndex}
-                                    className={`relative flex items-center p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group
+                                    className={`relative flex items-center p-5 rounded-2xl border transition-all duration-300 cursor-pointer group
                                         ${answers[qIndex] === opt
-                                            ? 'bg-space-light/20 border-space-light shadow-[0_0_20px_rgba(30,144,255,0.2)]'
-                                            : 'bg-white/5 border-white/5 hover:border-white/20 hover:bg-white/10'}`}
+                                            ? 'bg-space-light/10 border-space-light/50 shadow-[0_0_30px_rgba(0,240,255,0.15)] ring-1 ring-space-light/20'
+                                            : 'bg-white/2 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
                                 >
                                     <input
                                         type="radio"
@@ -160,11 +198,11 @@ const QuizInterface = ({ classroomId, moduleIndex, moduleTitle, onComplete }) =>
                                         className="hidden"
                                         onChange={() => handleOptionChange(qIndex, opt)}
                                     />
-                                    <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all
-                                        ${answers[qIndex] === opt ? 'border-space-light bg-space-light' : 'border-gray-600'}`}>
-                                        {answers[qIndex] === opt && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                                    <div className={`w-5 h-5 rounded-full border-2 mr-5 flex items-center justify-center transition-all duration-500
+                                        ${answers[qIndex] === opt ? 'border-space-light bg-space-light scale-110 shadow-[0_0_10px_rgba(0,240,255,0.5)]' : 'border-white/10'}`}>
+                                        {answers[qIndex] === opt && <div className="w-2 h-2 bg-white rounded-full shadow-inner"></div>}
                                     </div>
-                                    <span className="text-gray-200 group-hover:text-white transition">{opt}</span>
+                                    <span className={`text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${answers[qIndex] === opt ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`}>{opt}</span>
                                 </label>
                             ))}
                         </div>
@@ -172,17 +210,20 @@ const QuizInterface = ({ classroomId, moduleIndex, moduleTitle, onComplete }) =>
                 ))}
             </div>
 
-            <div className="p-8 bg-black/30 border-t border-white/10 flex flex-col items-center">
+            <div className="p-10 bg-black/40 border-t border-white/10 flex flex-col items-center relative">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                 <Button
                     onClick={() => handleSubmit(false)}
                     isLoading={loading}
                     disabled={Object.keys(answers).length < quiz.questions.length}
-                    className="w-full max-w-sm rounded-full py-4 text-xl shadow-2xl"
+                    className="w-full max-w-sm py-5 text-[11px] font-black uppercase tracking-[0.3em] rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
                 >
-                    Submit Assessment
+                    Authorize Data Submission
                 </Button>
                 {Object.keys(answers).length < quiz.questions.length && (
-                    <p className="text-gray-500 text-sm mt-4 italic">Please answer all questions to submit</p>
+                    <p className="text-[9px] text-gray-600 mt-6 font-black uppercase tracking-widest animate-pulse">
+                        Awaiting Complete Intelligence Parameter Set ({Object.keys(answers).length} / {quiz.questions.length})
+                    </p>
                 )}
             </div>
         </div>

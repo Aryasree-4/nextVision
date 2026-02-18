@@ -1,10 +1,11 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const ProfileIcon = ({ size = 'md' }) => {
     const auth = useAuth();
     const user = auth?.user;
+    const [imgError, setImgError] = useState(false);
 
     const sizeClasses = {
         sm: 'w-8 h-8 text-xs',
@@ -23,24 +24,23 @@ const ProfileIcon = ({ size = 'md' }) => {
     return (
         <Link
             to="/profile"
-            className={`${sClass} rounded-full border-2 border-white/20 hover:border-space-light transition-all flex items-center justify-center overflow-hidden bg-gray-800 shadow-lg group`}
-            title="My Profile"
+            className={`${sClass} rounded-full border border-white/10 hover:border-space-accent transition-all duration-500 flex items-center justify-center overflow-hidden bg-black/40 shadow-[0_0_20px_rgba(0,0,0,0.5)] group relative`}
+            title="Profile"
         >
-            {user.profilePicture && user.profilePicture !== 'default-profile.png' ? (
+            <div className="absolute inset-0 bg-space-accent/5 group-hover:bg-space-accent/10 transition-colors"></div>
+            {user.profilePicture && user.profilePicture !== 'default-profile.png' && !imgError ? (
                 <img
                     src={`http://localhost:5000/uploads/${user.profilePicture}`}
                     alt={user.name || 'User'}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                    }}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 relative z-10"
+                    onError={() => setImgError(true)}
                 />
             ) : null}
-            <div className={`w-full h-full flex items-center justify-center bg-space-light text-space-dark font-bold uppercase group-hover:bg-white transition-colors ${user.profilePicture && user.profilePicture !== 'default-profile.png' ? 'hidden' : ''}`}>
-                {initial}
-            </div>
+            {(!user.profilePicture || user.profilePicture === 'default-profile.png' || imgError) && (
+                <div className="w-full h-full flex items-center justify-center bg-space-accent/20 text-space-accent font-black uppercase tracking-tighter group-hover:bg-space-accent group-hover:text-black transition-all duration-500 relative z-10">
+                    {initial}
+                </div>
+            )}
         </Link>
     );
 };
