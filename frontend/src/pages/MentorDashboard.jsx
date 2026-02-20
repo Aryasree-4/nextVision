@@ -507,190 +507,189 @@ const MentorDashboard = () => {
                             </div>
                         )}
 
-                        {editingQuiz && (
-                            <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[60] overflow-y-auto">
-                                <div className="bg-space-blue border border-white/20 rounded-xl p-8 w-full max-w-4xl shadow-2xl my-8">
-                                    <h3 className="text-2xl font-bold text-white mb-6">Module {editingQuiz.moduleIndex + 1} Assessment Quiz</h3>
-                                    <div className="space-y-8 mb-8">
-                                        {editingQuiz.questions.map((q, qIndex) => (
-                                            <div key={qIndex} className="bg-white/5 p-6 rounded-lg border border-white/10 relative group">
-                                                <button
-                                                    onClick={() => {
+                    </div>
+                </GlassCard>
+            </div>
+
+            {editingQuiz && (
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-start justify-center p-4 z-[100] overflow-y-auto pt-10 md:pt-20">
+                    <div className="bg-space-blue border border-white/20 rounded-xl p-8 w-full max-w-4xl shadow-2xl my-8">
+                        <h3 className="text-2xl font-bold text-white mb-6">Module {editingQuiz.moduleIndex + 1} Assessment Quiz</h3>
+                        <div className="space-y-8 mb-8">
+                            {editingQuiz.questions.map((q, qIndex) => (
+                                <div key={qIndex} className="bg-white/5 p-6 rounded-lg border border-white/10 relative group">
+                                    <button
+                                        onClick={() => {
+                                            const newQuestions = [...editingQuiz.questions];
+                                            newQuestions.splice(qIndex, 1);
+                                            setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                        }}
+                                        className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition"
+                                        title="Remove Question"
+                                    >
+                                        ✕
+                                    </button>
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Question {qIndex + 1}</label>
+                                        <input
+                                            type="text"
+                                            value={q.question}
+                                            onChange={(e) => {
+                                                const newQuestions = [...editingQuiz.questions];
+                                                newQuestions[qIndex].question = e.target.value;
+                                                setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+                                            }}
+                                            className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none"
+                                            placeholder="Enter question text..."
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {q.options.map((opt, oIndex) => (
+                                            <div key={oIndex}>
+                                                <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Option {oIndex + 1}</label>
+                                                <input
+                                                    type="text"
+                                                    value={opt}
+                                                    onChange={(e) => {
                                                         const newQuestions = [...editingQuiz.questions];
-                                                        newQuestions.splice(qIndex, 1);
+                                                        newQuestions[qIndex].options[oIndex] = e.target.value;
                                                         setEditingQuiz({ ...editingQuiz, questions: newQuestions });
                                                     }}
-                                                    className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition"
-                                                    title="Remove Question"
-                                                >
-                                                    ✕
-                                                </button>
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-400 mb-2">Question {qIndex + 1}</label>
-                                                    <input
-                                                        type="text"
-                                                        value={q.question}
-                                                        onChange={(e) => {
-                                                            const newQuestions = [...editingQuiz.questions];
-                                                            newQuestions[qIndex].question = e.target.value;
-                                                            setEditingQuiz({ ...editingQuiz, questions: newQuestions });
-                                                        }}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none"
-                                                        placeholder="Enter question text..."
-                                                    />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {q.options.map((opt, oIndex) => (
-                                                        <div key={oIndex}>
-                                                            <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Option {oIndex + 1}</label>
-                                                            <input
-                                                                type="text"
-                                                                value={opt}
-                                                                onChange={(e) => {
-                                                                    const newQuestions = [...editingQuiz.questions];
-                                                                    newQuestions[qIndex].options[oIndex] = e.target.value;
-                                                                    setEditingQuiz({ ...editingQuiz, questions: newQuestions });
-                                                                }}
-                                                                className="w-full bg-black/20 border border-white/5 rounded p-2 text-sm text-white focus:border-space-light outline-none"
-                                                                placeholder={`Option ${oIndex + 1}`}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mt-4">
-                                                    <label className="block text-sm font-medium text-gray-400 mb-2">Correct Answer</label>
-                                                    <select
-                                                        value={q.correctAnswer}
-                                                        onChange={(e) => {
-                                                            const newQuestions = [...editingQuiz.questions];
-                                                            newQuestions[qIndex].correctAnswer = e.target.value;
-                                                            setEditingQuiz({ ...editingQuiz, questions: newQuestions });
-                                                        }}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-md p-2 text-white outline-none focus:ring-2 focus:ring-space-light"
-                                                    >
-                                                        <option value="">Select Correct Option</option>
-                                                        {q.options.map((opt, oIndex) => (
-                                                            <option key={oIndex} value={opt}>{opt || `Option ${oIndex + 1}`}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+                                                    className="w-full bg-black/20 border border-white/5 rounded p-2 text-sm text-white focus:border-space-light outline-none"
+                                                    placeholder={`Option ${oIndex + 1}`}
+                                                />
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex flex-col md:flex-row justify-between gap-4">
-                                        <button
-                                            onClick={() => {
-                                                setEditingQuiz({
-                                                    ...editingQuiz,
-                                                    questions: [...editingQuiz.questions, { question: '', options: ['', '', '', ''], correctAnswer: '' }]
-                                                });
+                                    <div className="mt-4">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Correct Answer</label>
+                                        <select
+                                            value={q.correctAnswer}
+                                            onChange={(e) => {
+                                                const newQuestions = [...editingQuiz.questions];
+                                                newQuestions[qIndex].correctAnswer = e.target.value;
+                                                setEditingQuiz({ ...editingQuiz, questions: newQuestions });
                                             }}
-                                            className="px-4 py-2 border border-space-light text-space-light rounded hover:bg-space-light/10 transition"
+                                            className="w-full bg-black/40 border border-white/10 rounded-md p-2 text-white outline-none focus:ring-2 focus:ring-space-light"
                                         >
-                                            + Add Question
-                                        </button>
-                                        <div className="flex gap-4">
-                                            <button
-                                                onClick={() => setEditingQuiz(null)}
-                                                className="px-6 py-2 bg-transparent text-gray-300 hover:text-white transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <Button
-                                                onClick={handleSaveQuiz}
-                                                isLoading={loading}
-                                                disabled={editingQuiz.questions.length < 4 || editingQuiz.questions.some(q => !q.question || q.options.some(o => !o) || !q.correctAnswer)}
-                                            >
-                                                Save Quiz
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    {editingQuiz.questions.length < 4 && (
-                                        <p className="text-red-400 text-xs mt-4">Minimum 4 questions required to save.</p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {editingTopic && (
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                                <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-2xl shadow-2xl">
-                                    <h3 className="text-xl font-bold text-white mb-4">Edit Topic: {editingTopic.title}</h3>
-                                    <div className="mb-4">
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">Content (Markdown supported)</label>
-                                        <textarea
-                                            value={editContent}
-                                            onChange={(e) => setEditContent(e.target.value)}
-                                            rows="10"
-                                            className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none font-mono text-sm"
-                                        ></textarea>
-                                    </div>
-                                    <div className="flex justify-end space-x-3">
-                                        <button
-                                            onClick={() => setEditingTopic(null)}
-                                            className="px-4 py-2 bg-transparent text-gray-300 hover:text-white transition"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <Button onClick={handleSaveContent} isLoading={loading} className="w-auto">
-                                            Save Changes
-                                        </Button>
+                                            <option value="">Select Correct Option</option>
+                                            {q.options.map((opt, oIndex) => (
+                                                <option key={oIndex} value={opt}>{opt || `Option ${oIndex + 1}`}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-col md:flex-row justify-between gap-4">
+                            <button
+                                onClick={() => {
+                                    setEditingQuiz({
+                                        ...editingQuiz,
+                                        questions: [...editingQuiz.questions, { question: '', options: ['', '', '', ''], correctAnswer: '' }]
+                                    });
+                                }}
+                                className="px-4 py-2 border border-space-light text-space-light rounded hover:bg-space-light/10 transition"
+                            >
+                                + Add Question
+                            </button>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setEditingQuiz(null)}
+                                    className="px-6 py-2 bg-transparent text-gray-300 hover:text-white transition"
+                                >
+                                    Cancel
+                                </button>
+                                <Button
+                                    onClick={handleSaveQuiz}
+                                    isLoading={loading}
+                                    disabled={editingQuiz.questions.length < 4 || editingQuiz.questions.some(q => !q.question || q.options.some(o => !o) || !q.correctAnswer)}
+                                >
+                                    Save Quiz
+                                </Button>
                             </div>
-                        )}
-
-                        {showBroadcastModal && (
-                            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
-                                <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-lg shadow-2xl">
-                                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                        <span className="text-2xl">📢</span> Broadcast to Classroom
-                                    </h3>
-                                    <form onSubmit={handleBroadcast} className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-2">Message</label>
-                                            <textarea
-                                                value={broadcastMessage}
-                                                onChange={(e) => setBroadcastMessage(e.target.value)}
-                                                rows="4"
-                                                className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
-                                                placeholder="Type your announcement here..."
-                                                required
-                                            ></textarea>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-400 mb-2">Attachment Link (Optional)</label>
-                                            <input
-                                                type="url"
-                                                value={broadcastLink}
-                                                onChange={(e) => setBroadcastLink(e.target.value)}
-                                                className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
-                                                placeholder="https://meet.google.com/..."
-                                            />
-                                            <p className="text-[10px] text-gray-500 mt-1">Useful for meeting links or external resources.</p>
-                                        </div>
-                                        <div className="flex justify-end gap-3 mt-6">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowBroadcastModal(false)}
-                                                className="px-4 py-2 bg-transparent text-gray-300 hover:text-white transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <Button type="submit" isLoading={loading} className="w-auto">
-                                                Send Now
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+                        </div>
+                        {editingQuiz.questions.length < 4 && (
+                            <p className="text-red-400 text-xs mt-4">Minimum 4 questions required to save.</p>
                         )}
                     </div>
-                </GlassCard>
-            </div >
+                </div>
+            )}
 
-            {/* Modal Logic remains unchanged but wrapped in GlassCard styles elsewhere */}
-        </div >
+            {editingTopic && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 z-[100] overflow-y-auto pt-10 md:pt-20">
+                    <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-2xl shadow-2xl my-8">
+                        <h3 className="text-xl font-bold text-white mb-4">Edit Topic: {editingTopic.title}</h3>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-300 mb-2">Content</label>
+                            <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                rows="10"
+                                className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none font-mono text-sm"
+                            ></textarea>
+                        </div>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => setEditingTopic(null)}
+                                className="px-4 py-2 bg-transparent text-gray-300 hover:text-white transition"
+                            >
+                                Cancel
+                            </button>
+                            <Button onClick={handleSaveContent} isLoading={loading} className="w-auto">
+                                Save Changes
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showBroadcastModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 z-[100] overflow-y-auto pt-10 md:pt-20">
+                    <div className="bg-space-blue border border-white/20 rounded-xl p-6 w-full max-w-lg shadow-2xl my-8">
+                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <span className="text-2xl">📢</span> Broadcast to Classroom
+                        </h3>
+                        <form onSubmit={handleBroadcast} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Message</label>
+                                <textarea
+                                    value={broadcastMessage}
+                                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                                    rows="4"
+                                    className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
+                                    placeholder="Type your announcement here..."
+                                    required
+                                ></textarea>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Attachment Link (Optional)</label>
+                                <input
+                                    type="url"
+                                    value={broadcastLink}
+                                    onChange={(e) => setBroadcastLink(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 rounded-md p-3 text-white focus:ring-2 focus:ring-space-light outline-none text-sm"
+                                    placeholder="https://meet.google.com/..."
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">Useful for meeting links or external resources.</p>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBroadcastModal(false)}
+                                    className="px-4 py-2 bg-transparent text-gray-300 hover:text-white transition"
+                                >
+                                    Cancel
+                                </button>
+                                <Button type="submit" isLoading={loading} className="w-auto">
+                                    Send Now
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
