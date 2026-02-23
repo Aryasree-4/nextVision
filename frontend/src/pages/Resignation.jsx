@@ -86,14 +86,16 @@ const Resignation = () => {
             const endDate = format(new Date(), 'do MMMM yyyy');
 
             const certificateText = `has served as a Mentor for the NextVision Learning Platform from ${startDate} to ${endDate}.`;
-            doc.text(certificateText, width / 2, 95, { align: 'center' });
+            const splitCertificateText = doc.splitTextToSize(certificateText, width - 60);
+            doc.text(splitCertificateText, width / 2, 95, { align: 'center' });
 
             const bodyText = "During their tenure, they have demonstrated exceptional dedication to teaching, academic excellence, and student mentorship. Their contributions to the development of advanced learning resources and interactive classroom experiences have been instrumental to the platform's vision.";
-            const splitBodyText = doc.splitTextToSize(bodyText, width - 80);
+            const splitBodyText = doc.splitTextToSize(bodyText, width - 70);
             doc.text(splitBodyText, width / 2, 110, { align: 'center' });
 
             const appreciationText = "We deeply appreciate their professionalism and commitment. This certificate is issued as a token of gratitude for their invaluable service.";
-            doc.text(appreciationText, width / 2, 135, { align: 'center' });
+            const splitAppreciationText = doc.splitTextToSize(appreciationText, width - 70);
+            doc.text(splitAppreciationText, width / 2, 135, { align: 'center' });
 
             // Footer Text
             doc.setFontSize(12);
@@ -110,10 +112,10 @@ const Resignation = () => {
             doc.text('Founder & CEO', width - 85, height - 38);
             doc.text(`Issued on: ${endDate}`, width - 85, height - 33);
 
-            // Footer Contact
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text('NextVision Ed-Tech Learning Platform  |  contact: mithunsudhakaran95@gmail.com', width / 2, height - 12, { align: 'center' });
+            // Footer Contact (Improved Visibility)
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text('NextVision Ed-Tech Learning Platform  |  contact: mithunsudhakaran95@gmail.com', width / 2, height - 15, { align: 'center' });
 
             setIsGenerating(false);
             if (isBackup) {
