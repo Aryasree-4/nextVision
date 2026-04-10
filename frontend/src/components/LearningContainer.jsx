@@ -86,7 +86,7 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
     const isLastTopic = currentTopicIndex === currentModule.topics.length - 1;
 
     // Safety check for currentTopic to avoid blank screen/crash
-    if (!currentTopic) {
+    if (!currentTopic && !showQuiz) {
         return (
             <div className="fixed inset-0 bg-[#02040a] z-[60] flex items-center justify-center p-8">
                 <SpaceBackground mode="static" />
@@ -127,132 +127,200 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
         setCurrentTopicIndex(-1); // Special index for completion page
     };
 
+    const furthestModuleIndex = progress ? progress.moduleProgress.filter(mp => mp.completed).length : 0;
 
+    const handleSidebarNav = (mIdx, tIdx, isQuizBtn = false) => {
+        if (mIdx > furthestModuleIndex) return; // Locked
 
-    if (showQuiz) {
-        return (
-            <div className="fixed inset-0 bg-[#02040a] z-[70] p-8 overflow-y-auto">
-                <SpaceBackground mode="static" />
-                <div className="max-w-4xl mx-auto relative z-10">
-                    <button
-                        onClick={() => setShowQuiz(false)}
-                        className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white mb-8 flex items-center gap-2 transition-colors"
-                    >
-                        &larr; Back to Lesson
-                    </button>
-                    <QuizInterface
-                        classroomId={classroom._id}
-                        moduleIndex={currentModuleIndex}
-                        moduleTitle={currentModule.title}
-                        onComplete={handleQuizComplete}
-                    />
-                </div>
-            </div>
-        );
-    }
+        setCurrentModuleIndex(mIdx);
+        if (isQuizBtn) {
+            setShowQuiz(true);
+            // Optionally, we could set currentTopicIndex to logic that preserves current reading state
+            // But since topics aren't strictly saved individually, we can just leave it as is or set it to 0
+        } else {
+            setShowQuiz(false);
+            setCurrentTopicIndex(tIdx);
+        }
+    };
 
     return (
-        <div className="fixed inset-0 bg-[#02040a] z-[60] flex flex-col font-body overflow-hidden">
+        <div className="fixed inset-0 bg-[#02040a] z-[60] flex font-body overflow-hidden">
             <SpaceBackground mode="static" />
 
-            <header className="p-6 border-b border-white/10 flex justify-between items-center bg-black/40 backdrop-blur-md relative z-20">
-                <div className="flex items-center gap-6">
-                    <button
-                        onClick={onClose}
-                        className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all font-black text-sm"
-                    >
-                        ✕
-                    </button>
-                    <div className="flex flex-col">
-                        <h2 className="text-xs font-black text-white uppercase tracking-[0.2em]">{classroom.course?.title}</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="h-1 w-1 bg-space-accent rounded-full animate-pulse"></span>
-                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-                                Module {currentModuleIndex + 1}: {currentModule.title}
+            {/* --- SIDEBAR --- */}
+            <aside className="w-80 bg-black/40 backdrop-blur-xl border-r border-white/10 flex flex-col relative z-30 transition-all duration-300">
+                <div className="p-6 border-b border-white/10 flex flex-col gap-2">
+                    <h2 className="text-xs font-black text-white uppercase tracking-[0.2em] leading-relaxed truncate" title={classroom.course?.title}>
+                        {classroom.course?.title}
+                    </h2>
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Syllabus Explorer</div>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+                    {classroom.syllabus.map((module, mIdx) => {
+                        const isLocked = mIdx > furthestModuleIndex;
+                        const isCurrentModule = mIdx === currentModuleIndex;
+                        return (
+                            <div key={mIdx} className={`space-y-3 ${isLocked ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                                <div className="flex justify-between items-center px-2">
+                                    <h3 className="text-[10px] font-black text-space-accent uppercase tracking-[0.15em] leading-relaxed">
+                                        M{mIdx + 1}: {module.title}
+                                    </h3>
+                                    {isLocked && <span className="text-[10px]">🔒</span>}
+                                </div>
+                                <div className="pl-4 ml-2 border-l border-white/10 space-y-1">
+                                    {module.topics.map((topic, tIdx) => {
+                                        const isActive = isCurrentModule && currentTopicIndex === tIdx && !showQuiz;
+                                        return (
+                                            <button
+                                                key={tIdx}
+                                                disabled={isLocked}
+                                                onClick={() => handleSidebarNav(mIdx, tIdx, false)}
+                                                className={`block w-full text-left text-[11px] font-medium transition-all p-2 rounded-md ${
+                                                    isActive 
+                                                        ? 'text-white bg-white/10 font-bold shadow-sm' 
+                                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                                                } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                            >
+                                                {topic.title}
+                                            </button>
+                                        )
+                                    })}
+                                    <button
+                                        disabled={isLocked}
+                                        onClick={() => handleSidebarNav(mIdx, 0, true)}
+                                        className={`flex items-center gap-2 w-full text-left text-[10px] uppercase tracking-widest mt-3 p-2 rounded-md border transition-all ${
+                                            isCurrentModule && showQuiz
+                                                ? 'border-space-light/50 bg-space-light/10 text-space-light font-black shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                                                : isLocked 
+                                                    ? 'border-transparent text-gray-600'
+                                                    : 'border-white/10 text-gray-400 hover:border-space-light/30 hover:text-space-light'
+                                        }`}
+                                    >
+                                        <span>🎯</span> Module Assessment
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="p-6 border-t border-white/10">
+                    <Button onClick={onClose} variant="secondary" className="w-full text-[10px] py-3 uppercase tracking-widest font-black transition-all hover:bg-white/10 hover:border-white/20">
+                        &larr; Exit Mission
+                    </Button>
+                </div>
+            </aside>
+
+            {/* --- MAIN CONTENT AREA --- */}
+            <main className="flex-1 flex flex-col relative z-20 overflow-hidden">
+                <header className="px-8 py-5 border-b border-white/10 flex justify-between items-center bg-black/40 backdrop-blur-md">
+                    <div className="flex items-center gap-4 bg-white/5 px-6 py-2.5 rounded-full border border-white/10">
+                        <div className="flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 bg-space-light rounded-full animate-pulse"></span>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] whitespace-nowrap">
+                                MOD {currentModuleIndex + 1}
                             </p>
                         </div>
+                        <span className="text-white/10">|</span>
+                        <p className="text-xs text-white font-black uppercase tracking-[0.1em] truncate max-w-[200px] md:max-w-md">
+                            {showQuiz ? 'FINAL ASSESSMENT' : currentTopic?.title}
+                        </p>
                     </div>
-                </div>
-                <div className="flex items-center gap-6">
-                    {!showQuiz && (
-                        <button
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className={`relative p-3 rounded-xl border transition-all duration-300 group shadow-lg ${unreadCount > 0
-                                ? 'bg-error/10 text-error border-error/30 ring-4 ring-error/5 pulse-shadow'
-                                : 'bg-space-accent/5 text-space-accent border-space-accent/30 ring-4 ring-space-accent/5'
-                                }`}
-                            title="Announcements"
-                        >
-                            <span className="text-xl group-hover:scale-110 transition-transform block">
-                                {unreadCount > 0 ? '📡' : '🛰️'}
-                            </span>
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-white text-error text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-bounce ring-2 ring-error/50">
-                                    {unreadCount}
+
+                    <div className="flex items-center gap-6">
+                        {!showQuiz && (
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className={`relative p-3 rounded-xl border transition-all duration-300 group shadow-lg ${unreadCount > 0
+                                    ? 'bg-error/10 text-error border-error/30 ring-4 ring-error/5 pulse-shadow'
+                                    : 'bg-space-accent/5 text-space-accent border-space-accent/30 ring-4 ring-space-accent/5'
+                                    }`}
+                                title="Announcements"
+                            >
+                                <span className="text-xl group-hover:scale-110 transition-transform block">
+                                    {unreadCount > 0 ? '📡' : '🛰️'}
                                 </span>
-                            )}
-                        </button>
-                    )}
-                    <div className="flex gap-1.5 px-4 h-8 items-center bg-white/5 border border-white/5 rounded-full">
-                        {classroom.syllabus.map((_, idx) => (
-                            <div
-                                key={idx}
-                                className={`w-6 h-1 rounded-full transition-all duration-700 ${idx <= currentModuleIndex ? 'bg-space-accent shadow-[0_0_10px_rgba(0,240,255,0.4)]' : 'bg-gray-800'}`}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </header>
-
-            <main className="flex-1 flex items-center justify-center p-8 relative z-10">
-                <NotificationBoard
-                    isOpen={showNotifications}
-                    onClose={() => setShowNotifications(false)}
-                />
-
-                <GlassCard
-                    className={`w-full max-w-4xl h-[80vh] flex flex-col group transition-all duration-700 ${showNotifications ? 'blur-md grayscale-[0.5] scale-[0.98] opacity-20' : ''}`}
-                    hover={false}
-                >
-                    <div className="absolute top-0 left-0 w-2 h-full bg-space-accent/40"></div>
-
-                    <div className="p-12 flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="mb-10 animate-fade-in">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-space-accent/60">Sequence {currentTopicIndex + 1} // Intelligence Stream</span>
-                            <h1 className="text-4xl font-black text-white mt-4 uppercase tracking-tight">{currentTopic.title}</h1>
-                        </div>
-
-                        <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg font-medium animate-fade-in stagger-fade-item">
-                            {currentTopic.content}
-                        </div>
-                    </div>
-
-                    <div className="p-8 border-t border-white/5 bg-black/40 backdrop-blur-md flex justify-between items-center relative z-20">
-                        <button
-                            disabled={isFirstTopic}
-                            onClick={handlePrev}
-                            className={`px-8 py-3 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 transition-all ${isFirstTopic ? 'opacity-10 cursor-not-allowed' : 'hover:bg-white/5 hover:text-white hover:border-white/20'}`}
-                        >
-                            &larr; Back
-                        </button>
-
-                        <div className="flex gap-2">
-                            {currentModule.topics.map((_, idx) => (
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-white text-error text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-bounce ring-2 ring-error/50">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                        <div className="flex gap-1.5 px-4 h-9 items-center bg-white/5 border border-white/5 rounded-full">
+                            {classroom.syllabus.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-1.5 transition-all duration-500 rounded-full ${idx === currentTopicIndex ? 'w-8 bg-space-accent' : 'w-2 bg-white/10'}`}
+                                    className={`w-6 h-1 rounded-full transition-all duration-700 ${idx <= currentModuleIndex ? 'bg-space-light shadow-[0_0_10px_rgba(59,130,246,0.4)]' : 'bg-gray-800'}`}
                                 />
                             ))}
                         </div>
-
-                        <Button
-                            onClick={isLastTopic && isLastModule && progress?.isCourseCompleted ? handleFinishCourse : handleNext}
-                            className="rounded-full px-10 py-3 text-[10px] font-black uppercase tracking-[0.2em]"
-                        >
-                            {isLastTopic ? (isLastModule && progress?.isCourseCompleted ? 'Finish Course' : 'Start Quiz') : 'Next \u2192'}
-                        </Button>
                     </div>
-                </GlassCard>
+                </header>
+
+                <div className="flex-1 flex justify-center p-8 relative overflow-y-auto custom-scrollbar">
+                    <NotificationBoard
+                        isOpen={showNotifications}
+                        onClose={() => setShowNotifications(false)}
+                    />
+
+                    {showQuiz ? (
+                        <div className="w-full max-w-4xl mx-auto rounded-3xl relative z-10 transition-all duration-500 animate-scale-in my-auto h-auto min-h-0 bg-space-navy/50 backdrop-blur-md border border-white/10 p-6 overflow-hidden">
+                            <QuizInterface
+                                classroomId={classroom._id}
+                                moduleIndex={currentModuleIndex}
+                                moduleTitle={currentModule.title}
+                                onComplete={handleQuizComplete}
+                            />
+                        </div>
+                    ) : (
+                        <GlassCard
+                            className={`w-full max-w-4xl min-h-[70vh] flex flex-col items-stretch transition-all duration-700 mx-auto my-auto ${showNotifications ? 'blur-md grayscale-[0.5] scale-[0.98] opacity-20' : ''}`}
+                            hover={false}
+                        >
+                            <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-space-light to-space-accent/20 rounded-l-2xl"></div>
+
+                            <div className="p-12 pl-14 flex-1">
+                                <div className="mb-10 animate-fade-in">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-space-accent/60 flex items-center gap-2">
+                                        <span className="w-4 h-[1px] bg-space-accent/60"></span>
+                                        Sequence {currentTopicIndex + 1} // Intelligence Stream
+                                    </span>
+                                    <h1 className="text-4xl font-black text-white mt-4 uppercase tracking-tight">{currentTopic?.title}</h1>
+                                </div>
+
+                                <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed text-lg font-medium animate-fade-in stagger-fade-item">
+                                    {currentTopic?.content}
+                                </div>
+                            </div>
+
+                            <div className="px-12 py-8 border-t border-white/5 bg-black/40 backdrop-blur-md flex justify-between items-center relative z-20 rounded-b-2xl">
+                                <button
+                                    disabled={isFirstTopic}
+                                    onClick={handlePrev}
+                                    className={`px-8 py-3 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${isFirstTopic ? 'opacity-10 cursor-not-allowed text-gray-500' : 'text-gray-300 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
+                                >
+                                    &larr; Back
+                                </button>
+
+                                <div className="flex gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/5">
+                                    {currentModule.topics.map((_, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`h-1.5 transition-all duration-500 rounded-full ${idx === currentTopicIndex ? 'w-8 bg-space-accent' : 'w-2 bg-white/10'}`}
+                                        />
+                                    ))}
+                                </div>
+
+                                <Button
+                                    onClick={isLastTopic && isLastModule && progress?.isCourseCompleted ? handleFinishCourse : handleNext}
+                                    className="rounded-full px-10 py-3 text-[10px] font-black uppercase tracking-[0.2em]"
+                                >
+                                    {isLastTopic ? (isLastModule && progress?.isCourseCompleted ? 'Finish Course' : 'Start Quiz') : 'Next \u2192'}
+                                </Button>
+                            </div>
+                        </GlassCard>
+                    )}
+                </div>
             </main>
         </div>
     );
