@@ -23,7 +23,7 @@ const AdminDashboard = () => {
 
     // Modals
     const [showUserModal, setShowUserModal] = useState(false);
-    const [newUser, setNewUser] = useState({ name: '', email: '', role: 'learner' });
+    const [newUser, setNewUser] = useState({ name: '', email: '', role: 'learner', contactNumber: '' });
     const [showReassignModal, setShowReassignModal] = useState(false);
     const [reassignData, setReassignData] = useState({ studentId: '', fromClassroomId: '', toClassroomId: '' });
 
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
         try {
             await api.post('/users', newUser);
             setShowUserModal(false);
-            setNewUser({ name: '', email: '', role: 'learner' });
+            setNewUser({ name: '', email: '', role: 'learner', contactNumber: '' });
             fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to create user');
@@ -302,6 +302,7 @@ const AdminDashboard = () => {
                                                 <tr className="bg-white/5">
                                                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Users</th>
                                                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Identifier</th>
+                                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contact</th>
                                                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Role</th>
                                                     <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Actions</th>
                                                 </tr>
@@ -316,6 +317,7 @@ const AdminDashboard = () => {
                                                                 </a>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.email}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.contactNumber || 'N/A'}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${u.role === 'admin' ? 'bg-error/10 text-error border-error/20' : u.role === 'mentor' ? 'bg-space-light/10 text-space-light border-space-light/20' : 'bg-white/5 text-gray-400 border-white/10'}`}>
                                                                     {u.role}
@@ -409,6 +411,10 @@ const AdminDashboard = () => {
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Email Identifier</label>
                                         <input type="email" required className="input-field" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Contact Number</label>
+                                        <input type="text" required className="input-field" value={newUser.contactNumber} onChange={e => setNewUser({ ...newUser, contactNumber: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">User Role</label>

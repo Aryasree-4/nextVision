@@ -19,7 +19,7 @@ const getAllUsers = async (req, res) => {
 // @access  Private/Admin
 const createUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, contactNumber } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -30,7 +30,8 @@ const createUser = async (req, res) => {
             name,
             email,
             password: password || 'password123', // Default if not provided
-            role: role || 'learner'
+            role: role || 'learner',
+            contactNumber
         });
 
         if (user) {
@@ -38,7 +39,8 @@ const createUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                contactNumber: user.contactNumber
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });

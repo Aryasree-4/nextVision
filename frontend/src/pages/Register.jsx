@@ -11,19 +11,67 @@ const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [contactNumber, setContactNumber] = useState('');
     const [role, setRole] = useState('learner');
+    const [formErrors, setFormErrors] = useState({});
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const { register } = useAuth();
     const navigate = useNavigate();
 
+    const validateForm = () => {
+        let isValid = true;
+        let newErrors = {};
+
+        if (!/^[a-zA-Z\s]+$/.test(name)) {
+            newErrors.name = 'Name must contain only alphabetic characters.';
+            isValid = false;
+        }
+
+        if (!/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/.test(email)) {
+             newErrors.email = 'Email can only contain letters, numbers, and the @ symbol.';
+             isValid = false;
+        }
+        
+        if (password.length > 12) {
+            newErrors.password = 'Password must be a maximum of 12 characters.';
+            isValid = false;
+        } else {
+            const missing = [];
+            if (!/(?=.*[0-9])/.test(password)) missing.push('one number');
+            if (!/(?=.*[a-z])/.test(password)) missing.push('one lowercase letter');
+            if (!/(?=.*[A-Z])/.test(password)) missing.push('one uppercase letter');
+            if (!/(?=.*[!@#$%^&*()_+={}\[\]|\\:;"'<>,.?/-])/.test(password)) missing.push('one special character');
+            
+            if (missing.length === 4) {
+               newErrors.password = 'Password must contain at least one number, one lowercase letter, one uppercase letter and one special character';
+               isValid = false;
+            } else if (missing.length > 0) {
+               newErrors.password = `Password is missing: ${missing.join(', ')}`;
+               isValid = false;
+            }
+        }
+
+        if (!/^[6-9]\d{9}$/.test(contactNumber)) {
+            newErrors.contactNumber = 'Contact number must be exactly 10 digits and start with 9, 8, 7, or 6.';
+            isValid = false;
+        }
+
+        setFormErrors(newErrors);
+        return isValid;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setFormErrors({});
         setError('');
+        
+        if (!validateForm()) return;
+
         setLoading(true);
         try {
-            await register(name, email, password, role);
+            await register(name, email, password, role, contactNumber);
             if (role === 'mentor') navigate('/mentor-dashboard');
             else if (role === 'admin') navigate('/admin-dashboard');
             else navigate('/learner-dashboard');
@@ -103,9 +151,10 @@ const Register = () => {
                                 id="user_reg_name"
                                 type="text"
                                 label="Full Name"
-                                placeholder="Commander Shepard"
+                                placeholder="enter your full name"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                onChange={(e) => {setName(e.target.value); setFormErrors(prev => ({...prev, name: ''}))}}
+                                error={formErrors.name}
                                 required
                                 autoComplete="off"
                             />
@@ -114,9 +163,10 @@ const Register = () => {
                                 id="user_reg_email"
                                 type="email"
                                 label="Email address"
-                                placeholder="name@station.com"
+                                placeholder="name@example.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {setEmail(e.target.value); setFormErrors(prev => ({...prev, email: ''}))}}
+                                error={formErrors.email}
                                 required
                                 autoComplete="off"
                             />
@@ -125,16 +175,29 @@ const Register = () => {
                                 id="user_reg_password"
                                 type="password"
                                 label="Security Key"
-                                placeholder="••••••••"
+                                placeholder="password must be at least 8 characters"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => {setPassword(e.target.value); setFormErrors(prev => ({...prev, password: ''}))}}
+                                error={formErrors.password}
                                 required
                                 autoComplete="new-password"
                             />
 
+                            <Input
+                                id="user_reg_contactNumber"
+                                type="text"
+                                label="Contact Number"
+                                placeholder="enter your contact number"
+                                value={contactNumber}
+                                onChange={(e) => {setContactNumber(e.target.value); setFormErrors(prev => ({...prev, contactNumber: ''}))}}
+                                error={formErrors.contactNumber}
+                                required
+                                autoComplete="off"
+                            />
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-3 ml-1">
-                                    Specialization Role
+                                    Role
                                 </label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <button

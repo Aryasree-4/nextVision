@@ -4,7 +4,7 @@ const User = require('../models/User');
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, contactNumber } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -18,6 +18,7 @@ const registerUser = async (req, res) => {
             email,
             password,
             role: role || 'learner', // Default to learner if not provided
+            contactNumber,
         });
 
         if (user) {
@@ -29,6 +30,7 @@ const registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                contactNumber: user.contactNumber,
                 bio: user.bio,
                 profilePicture: user.profilePicture,
                 message: 'Registration successful'
@@ -60,6 +62,7 @@ const loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                contactNumber: user.contactNumber,
                 bio: user.bio,
                 profilePicture: user.profilePicture,
                 message: 'Login successful'
