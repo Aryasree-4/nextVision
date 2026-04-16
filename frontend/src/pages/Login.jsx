@@ -81,7 +81,7 @@ const Login = () => {
                                 id="user_login_email"
                                 type="email"
                                 label="Email address"
-                                placeholder="name@example.com"
+                                placeholder="enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -92,10 +92,12 @@ const Login = () => {
                                 id="user_login_password"
                                 type="password"
                                 label="Password"
-                                placeholder="••••••••"
+                                placeholder="enter your password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                minLength={8}
+                                maxLength={16}
                                 autoComplete="new-password"
                             />
 

@@ -406,7 +406,18 @@ const AdminDashboard = () => {
                                 <div className="space-y-6">
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Full Name</label>
-                                        <input type="text" required className="input-field" value={newUser.name} onChange={e => setNewUser({ ...newUser, name: e.target.value })} />
+                                        <input
+                                            type="text"
+                                            required
+                                            className="input-field"
+                                            value={newUser.name}
+                                            onChange={e => {
+                                                const formattedValue = e.target.value
+                                                    .replace(/[^a-zA-Z\s]/g, '')
+                                                    .replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+                                                setNewUser({ ...newUser, name: formattedValue });
+                                            }}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Email Identifier</label>

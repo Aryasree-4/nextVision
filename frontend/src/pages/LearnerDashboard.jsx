@@ -94,7 +94,7 @@ const LearnerDashboard = () => {
                 <GlassCard className="p-8 flex flex-col md:flex-row justify-between items-center gap-6" hover={false}>
                     <div className="text-center md:text-left">
                         <h1 className="text-4xl font-extrabold text-white tracking-tight mb-1">Learner Dashboard</h1>
-                        <p className="text-gray-400 font-light tracking-wide">Welcome back, <span className="text-space-light font-medium">{user?.name}</span>.</p>
+                        <p className="text-gray-400 font-light tracking-wide">Welcome, <span className="text-space-light font-medium">{user?.name}</span>.</p>
                     </div>
                     <div className="flex items-center gap-8">
                         <div className="glass-panel p-1.5 rounded-full border-white/10">

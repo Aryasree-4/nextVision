@@ -34,8 +34,8 @@ const Register = () => {
              isValid = false;
         }
         
-        if (password.length > 12) {
-            newErrors.password = 'Password must be a maximum of 12 characters.';
+        if (password.length < 8 || password.length > 16) {
+            newErrors.password = 'Password must be between 8 and 16 characters.';
             isValid = false;
         } else {
             const missing = [];
@@ -153,7 +153,13 @@ const Register = () => {
                                 label="Full Name"
                                 placeholder="enter your full name"
                                 value={name}
-                                onChange={(e) => {setName(e.target.value); setFormErrors(prev => ({...prev, name: ''}))}}
+                                onChange={(e) => {
+                                    const formattedValue = e.target.value
+                                        .replace(/[^a-zA-Z\s]/g, '')
+                                        .replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+                                    setName(formattedValue);
+                                    setFormErrors(prev => ({...prev, name: ''}));
+                                }}
                                 error={formErrors.name}
                                 required
                                 autoComplete="off"
@@ -175,11 +181,13 @@ const Register = () => {
                                 id="user_reg_password"
                                 type="password"
                                 label="Security Key"
-                                placeholder="password must be at least 8 characters"
+                                placeholder="password must be between 8 and 16 characters"
                                 value={password}
                                 onChange={(e) => {setPassword(e.target.value); setFormErrors(prev => ({...prev, password: ''}))}}
                                 error={formErrors.password}
                                 required
+                                minLength={8}
+                                maxLength={16}
                                 autoComplete="new-password"
                             />
 

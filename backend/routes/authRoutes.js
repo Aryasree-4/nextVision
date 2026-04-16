@@ -28,7 +28,7 @@ const validateRegister = [
 
     body('password')
         .trim()
-        .isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+        .isLength({ min: 8, max: 16 }).withMessage('Password must be between 8 and 16 characters long')
         .matches(/\d/).withMessage('Password must contain at least one number')
         .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
         .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
