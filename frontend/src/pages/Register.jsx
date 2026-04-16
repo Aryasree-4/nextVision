@@ -34,8 +34,8 @@ const Register = () => {
              isValid = false;
         }
         
-        if (password.length < 8 || password.length > 16) {
-            newErrors.password = 'Password must be between 8 and 16 characters.';
+        if (password.length < 8 || password.length > 20) {
+            newErrors.password = 'Password must be between 8 and 20 characters.';
             isValid = false;
         } else {
             const missing = [];
@@ -181,13 +181,13 @@ const Register = () => {
                                 id="user_reg_password"
                                 type="password"
                                 label="Security Key"
-                                placeholder="password must be between 8 and 16 characters"
+                                placeholder="password must be between 8 and 20 characters"
                                 value={password}
                                 onChange={(e) => {setPassword(e.target.value); setFormErrors(prev => ({...prev, password: ''}))}}
                                 error={formErrors.password}
                                 required
                                 minLength={8}
-                                maxLength={16}
+                                maxLength={20}
                                 autoComplete="new-password"
                             />
 

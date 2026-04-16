@@ -97,7 +97,7 @@ const Login = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 minLength={8}
-                                maxLength={16}
+                                maxLength={20}
                                 autoComplete="new-password"
                             />
 
