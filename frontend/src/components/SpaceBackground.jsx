@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 
-const SpaceBackground = ({ mode = 'static' }) => {
+const SpaceBackground = ({ mode = 'static', theme = 'default' }) => {
     const canvasRef = useRef(null);
     const mouseRef = useRef({ x: -1000, y: -1000 });
 
@@ -33,7 +33,9 @@ const SpaceBackground = ({ mode = 'static' }) => {
                     x: Math.random() * canvasRef.current.width,
                     y: Math.random() * canvasRef.current.height,
                     size: Math.random() * 1.5 + 0.5,
-                    color: `rgba(255, 255, 255, ${Math.random() * 0.3 + 0.1})`,
+                    color: theme === 'admin' && Math.random() > 0.85
+                        ? `rgba(255, 235, 133, ${Math.random() * 0.5 + 0.2})` 
+                        : `rgba(255, 255, 255, ${Math.random() * 0.3 + 0.1})`,
                     originalX: 0,
                     originalY: 0,
                 });
@@ -112,6 +114,13 @@ const SpaceBackground = ({ mode = 'static' }) => {
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full"
             />
+            {theme === 'admin' && (
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute -top-[10%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-[#ff3366] mix-blend-screen opacity-10 blur-[120px]"></div>
+                    <div className="absolute top-[30%] -left-[10%] w-[50vw] h-[50vw] rounded-full bg-[#ff00a2] mix-blend-screen opacity-[0.08] blur-[100px]"></div>
+                    <div className="absolute -bottom-[10%] left-[20%] w-[70vw] h-[70vw] rounded-full bg-[#7a00ff] mix-blend-screen opacity-10 blur-[130px]"></div>
+                </div>
+            )}
             <div className="absolute inset-0 bg-radial-gradient from-transparent via-space-navy/50 to-space-navy pointer-events-none"></div>
         </div>
     );

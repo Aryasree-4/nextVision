@@ -180,7 +180,7 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen relative overflow-hidden pb-10 font-body">
-            <SpaceBackground mode="static" />
+            <SpaceBackground mode="static" theme="admin" />
 
             <div className="max-w-7xl mx-auto px-6 pt-10">
                 <GlassCard className="mb-10 animate-fade-in" hover={false}>
