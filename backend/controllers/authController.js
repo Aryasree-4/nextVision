@@ -4,7 +4,7 @@ const User = require('../models/User');
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
-    const { name, email, password, role, contactNumber } = req.body;
+    const { name, email, password, role, contactNumber, securityQuestion, securityAnswer } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -19,6 +19,8 @@ const registerUser = async (req, res) => {
             password,
             role: role || 'learner', // Default to learner if not provided
             contactNumber,
+            securityQuestion,
+            securityAnswer,
         });
 
         if (user) {
@@ -39,6 +41,9 @@ const registerUser = async (req, res) => {
             res.status(400).json({ message: 'Invalid user data' });
         }
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -100,9 +105,54 @@ const getMe = async (req, res) => {
     }
 };
 
+// @desc    Get user's security question
+// @route   POST /api/auth/forgot-password
+// @access  Public
+const getSecurityQuestion = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ securityQuestion: user.securityQuestion });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Verify answer and reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+    const { email, securityAnswer, newPassword } = req.body;
+
+    try {
+        const user = await User.findOne({ email }).select('+securityAnswer');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isMatch = await user.matchSecurityAnswer(securityAnswer);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect security answer' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successful' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     logoutUser,
     getMe,
+    getSecurityQuestion,
+    resetPassword,
 };

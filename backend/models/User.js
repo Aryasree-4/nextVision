@@ -37,6 +37,15 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: 'default-profile.png',
         },
+        securityQuestion: {
+            type: String,
+            required: true,
+        },
+        securityAnswer: {
+            type: String,
+            required: true,
+            select: false,
+        },
     },
     {
         timestamps: true,
@@ -45,21 +54,28 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before saving
 userSchema.pre('save', async function () {
-    if (!this.isModified('password')) {
-        return;
-    }
-
-    try {
+    if (this.isModified('password')) {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
-    } catch (error) {
-        throw error;
+    }
+
+    if (this.isModified('securityAnswer')) {
+        const salt = await bcrypt.genSalt(10);
+        // Lowercase the answer before hashing for case-insensitive matching later
+        const lowercasedAnswer = this.securityAnswer.toLowerCase().trim();
+        this.securityAnswer = await bcrypt.hash(lowercasedAnswer, salt);
     }
 });
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Match security answer
+userSchema.methods.matchSecurityAnswer = async function (enteredAnswer) {
+    const lowercasedAnswer = enteredAnswer.toLowerCase().trim();
+    return await bcrypt.compare(lowercasedAnswer, this.securityAnswer);
 };
 
 const User = mongoose.model('User', userSchema);

@@ -12,6 +12,8 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [contactNumber, setContactNumber] = useState('');
+    const [securityQuestion, setSecurityQuestion] = useState('');
+    const [securityAnswer, setSecurityAnswer] = useState('');
     const [role, setRole] = useState('learner');
     const [formErrors, setFormErrors] = useState({});
     const [error, setError] = useState('');
@@ -24,8 +26,14 @@ const Register = () => {
         let isValid = true;
         let newErrors = {};
 
-        if (!/^[a-zA-Z\s]+$/.test(name)) {
-            newErrors.name = 'Name must contain only alphabetic characters.';
+        if (!name.trim()) {
+            newErrors.name = 'Name is required.';
+            isValid = false;
+        } else if (name.trim().length < 2 || name.trim().length > 50) {
+            newErrors.name = 'Name must be between 2 and 50 characters.';
+            isValid = false;
+        } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+            newErrors.name = 'Name can only contain letters and spaces.';
             isValid = false;
         }
 
@@ -34,15 +42,16 @@ const Register = () => {
              isValid = false;
         }
         
-        if (password.length < 8 || password.length > 20) {
+        const trimmedPassword = password.trim();
+        if (trimmedPassword.length < 8 || trimmedPassword.length > 20) {
             newErrors.password = 'Password must be between 8 and 20 characters.';
             isValid = false;
         } else {
             const missing = [];
-            if (!/(?=.*[0-9])/.test(password)) missing.push('one number');
-            if (!/(?=.*[a-z])/.test(password)) missing.push('one lowercase letter');
-            if (!/(?=.*[A-Z])/.test(password)) missing.push('one uppercase letter');
-            if (!/(?=.*[!@#$%^&*()_+={}\[\]|\\:;"'<>,.?/-])/.test(password)) missing.push('one special character');
+            if (!/\d/.test(trimmedPassword)) missing.push('one number');
+            if (!/[a-z]/.test(trimmedPassword)) missing.push('one lowercase letter');
+            if (!/[A-Z]/.test(trimmedPassword)) missing.push('one uppercase letter');
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(trimmedPassword)) missing.push('one special character');
             
             if (missing.length === 4) {
                newErrors.password = 'Password must contain at least one number, one lowercase letter, one uppercase letter and one special character';
@@ -55,6 +64,16 @@ const Register = () => {
 
         if (!/^[6-9]\d{9}$/.test(contactNumber)) {
             newErrors.contactNumber = 'Contact number must be exactly 10 digits and start with 9, 8, 7, or 6.';
+            isValid = false;
+        }
+
+        if (!securityQuestion) {
+            newErrors.securityQuestion = 'Please select a security question.';
+            isValid = false;
+        }
+
+        if (!securityAnswer.trim()) {
+            newErrors.securityAnswer = 'Security answer is required.';
             isValid = false;
         }
 
@@ -71,14 +90,26 @@ const Register = () => {
 
         setLoading(true);
         try {
-            await register(name, email, password, role, contactNumber);
+            await register(name, email, password, role, contactNumber, securityQuestion, securityAnswer);
             if (role === 'mentor') navigate('/mentor-dashboard');
             else if (role === 'admin') navigate('/admin-dashboard');
             else navigate('/learner-dashboard');
         } catch (err) {
             console.error('Registration Error:', err);
             if (err.response?.data?.errors) {
-                setError(err.response.data.errors.map(e => e.msg).join(', '));
+                const backendErrors = {};
+                err.response.data.errors.forEach(e => {
+                    const fieldName = e.path || e.param;
+                    if (fieldName && !backendErrors[fieldName]) {
+                        backendErrors[fieldName] = e.msg;
+                    }
+                });
+                
+                if (Object.keys(backendErrors).length > 0) {
+                    setFormErrors(backendErrors);
+                } else {
+                    setError(err.response.data.errors.map(e => e.msg).join(', '));
+                }
             } else if (err.response?.data?.message) {
                 setError(err.response.data.message);
             } else {
@@ -199,6 +230,48 @@ const Register = () => {
                                 value={contactNumber}
                                 onChange={(e) => {setContactNumber(e.target.value); setFormErrors(prev => ({...prev, contactNumber: ''}))}}
                                 error={formErrors.contactNumber}
+                                required
+                                autoComplete="off"
+                            />
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">
+                                    Security Question
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        className={`input-field appearance-none cursor-pointer ${formErrors.securityQuestion ? 'border-error/50' : ''}`}
+                                        value={securityQuestion}
+                                        onChange={(e) => {setSecurityQuestion(e.target.value); setFormErrors(prev => ({...prev, securityQuestion: ''}))}}
+                                    >
+                                        <option value="" disabled className="bg-space-navy text-gray-500">Select a question</option>
+                                        <option value="What is your favorite color?" className="bg-space-navy text-white">What is your favorite color?</option>
+                                        <option value="In what city were you born?" className="bg-space-navy text-white">In what city were you born?</option>
+                                        <option value="What is the name of your first school?" className="bg-space-navy text-white">What is the name of your first school?</option>
+                                        <option value="What was your childhood pet's name?" className="bg-space-navy text-white">What was your childhood pet's name?</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-400">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                {formErrors.securityQuestion && (
+                                    <div className="text-error text-xs font-semibold mt-2 ml-1 flex items-center gap-1 animate-fade-in">
+                                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+                                        {formErrors.securityQuestion}
+                                    </div>
+                                )}
+                            </div>
+
+                            <Input
+                                id="user_reg_securityAnswer"
+                                type="text"
+                                label="Security Answer"
+                                placeholder="enter your answer"
+                                value={securityAnswer}
+                                onChange={(e) => {setSecurityAnswer(e.target.value); setFormErrors(prev => ({...prev, securityAnswer: ''}))}}
+                                error={formErrors.securityAnswer}
                                 required
                                 autoComplete="off"
                             />

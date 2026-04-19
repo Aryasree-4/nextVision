@@ -35,8 +35,8 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
-    const register = async (name, email, password, role, contactNumber) => {
-        const { data } = await api.post('/auth/register', { name, email, password, role, contactNumber });
+    const register = async (name, email, password, role, contactNumber, securityQuestion, securityAnswer) => {
+        const { data } = await api.post('/auth/register', { name, email, password, role, contactNumber, securityQuestion, securityAnswer });
         setUser(data);
         return data;
     };
@@ -59,8 +59,18 @@ export const AuthProvider = ({ children }) => {
         });
     };
 
+    const verifyEmailAndGetQuestion = async (email) => {
+        const { data } = await api.post('/auth/forgot-password', { email });
+        return data.securityQuestion;
+    };
+
+    const resetPassword = async (email, securityAnswer, newPassword) => {
+        const { data } = await api.post('/auth/reset-password', { email, securityAnswer, newPassword });
+        return data;
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, updateUserData }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, updateUserData, verifyEmailAndGetQuestion, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

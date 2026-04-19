@@ -101,6 +101,12 @@ const Login = () => {
                                 autoComplete="new-password"
                             />
 
+                            <div className="flex justify-end -mt-2">
+                                <Link to="/forgot-password" className="text-sm font-medium text-space-light hover:text-white transition-colors">
+                                    Forgot Password?
+                                </Link>
+                            </div>
+
                             <div className="pt-4">
                                 <Button type="submit" isLoading={loading} className="w-full py-4 uppercase tracking-[0.2em] text-xs">
                                     Authorize Access
