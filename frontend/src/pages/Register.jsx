@@ -228,7 +228,11 @@ const Register = () => {
                                 label="Contact Number"
                                 placeholder="enter your contact number"
                                 value={contactNumber}
-                                onChange={(e) => {setContactNumber(e.target.value); setFormErrors(prev => ({...prev, contactNumber: ''}))}}
+                                onChange={(e) => {
+                                    const formattedValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    setContactNumber(formattedValue);
+                                    setFormErrors(prev => ({...prev, contactNumber: ''}));
+                                }}
                                 error={formErrors.contactNumber}
                                 required
                                 autoComplete="off"

@@ -425,7 +425,10 @@ const AdminDashboard = () => {
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">Contact Number</label>
-                                        <input type="text" required className="input-field" value={newUser.contactNumber} onChange={e => setNewUser({ ...newUser, contactNumber: e.target.value })} />
+                                        <input type="text" required className="input-field" value={newUser.contactNumber} onChange={e => {
+                                            const formattedValue = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            setNewUser({ ...newUser, contactNumber: formattedValue });
+                                        }} />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 ml-1">User Role</label>
