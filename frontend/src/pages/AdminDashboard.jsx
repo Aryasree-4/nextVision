@@ -296,47 +296,113 @@ const AdminDashboard = () => {
                                 )}
 
                                 {activeTab === 'users' && (
-                                    <GlassCard className="overflow-hidden border-white/5" hover={false}>
-                                        <table className="min-w-full divide-y divide-white/5">
-                                            <thead>
-                                                <tr className="bg-white/5">
-                                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Users</th>
-                                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Identifier</th>
-                                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contact</th>
-                                                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Role</th>
-                                                    <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-white/5">
-                                                {Array.isArray(users) && users.map(u => (
-                                                    u && (
-                                                        <tr key={u._id} className="hover:bg-white/2 transition-colors">
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <a href={`/profile/${u._id}`} className="text-sm font-bold text-white hover:text-space-accent transition-colors">
-                                                                    {u.name}
-                                                                </a>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.email}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.contactNumber || 'N/A'}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${u.role === 'admin' ? 'bg-error/10 text-error border-error/20' : u.role === 'mentor' ? 'bg-space-light/10 text-space-light border-space-light/20' : 'bg-white/5 text-gray-400 border-white/10'}`}>
-                                                                    {u.role}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                                <button
-                                                                    onClick={() => handleDeleteUser(u._id)}
-                                                                    className="text-[10px] font-black uppercase tracking-widest text-error/60 hover:text-error transition-colors"
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </td>
+                                    <div className="space-y-8">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="h-5 w-1 bg-space-light rounded-full"></div>
+                                                <h3 className="text-lg font-bold text-white uppercase tracking-[0.1em]">Mentors</h3>
+                                            </div>
+                                            <GlassCard className="overflow-hidden border-white/5" hover={false}>
+                                                <table className="min-w-full divide-y divide-white/5">
+                                                    <thead>
+                                                        <tr className="bg-white/5">
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Users</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Identifier</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contact</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Role</th>
+                                                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Actions</th>
                                                         </tr>
-                                                    )
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </GlassCard>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-white/5">
+                                                        {Array.isArray(users) && users.filter(u => u?.role === 'mentor').map(u => (
+                                                            u && (
+                                                                <tr key={u._id} className="hover:bg-white/2 transition-colors">
+                                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                                        <a href={`/profile/${u._id}`} className="text-sm font-bold text-white hover:text-space-accent transition-colors">
+                                                                            {u.name}
+                                                                        </a>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.email}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.contactNumber || 'N/A'}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                                        <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-space-light/10 text-space-light border-space-light/20`}>
+                                                                            {u.role}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                                        <button
+                                                                            onClick={() => handleDeleteUser(u._id)}
+                                                                            className="text-[10px] font-black uppercase tracking-widest text-error/60 hover:text-error transition-colors"
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        ))}
+                                                        {(!users || users.filter(u => u?.role === 'mentor').length === 0) && (
+                                                            <tr>
+                                                                <td colSpan="5" className="px-6 py-8 text-center text-xs text-gray-500 italic">No mentors found.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </GlassCard>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="h-5 w-1 bg-space-accent rounded-full"></div>
+                                                <h3 className="text-lg font-bold text-white uppercase tracking-[0.1em]">Learners</h3>
+                                            </div>
+                                            <GlassCard className="overflow-hidden border-white/5" hover={false}>
+                                                <table className="min-w-full divide-y divide-white/5">
+                                                    <thead>
+                                                        <tr className="bg-white/5">
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Users</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Identifier</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Contact</th>
+                                                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Role</th>
+                                                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-white/5">
+                                                        {Array.isArray(users) && users.filter(u => u?.role === 'learner').map(u => (
+                                                            u && (
+                                                                <tr key={u._id} className="hover:bg-white/2 transition-colors">
+                                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                                        <a href={`/profile/${u._id}`} className="text-sm font-bold text-white hover:text-space-accent transition-colors">
+                                                                            {u.name}
+                                                                        </a>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.email}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium tracking-wide">{u.contactNumber || 'N/A'}</td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                                        <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-white/5 text-gray-400 border-white/10`}>
+                                                                            {u.role}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                                        <button
+                                                                            onClick={() => handleDeleteUser(u._id)}
+                                                                            className="text-[10px] font-black uppercase tracking-widest text-error/60 hover:text-error transition-colors"
+                                                                        >
+                                                                            Delete
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        ))}
+                                                        {(!users || users.filter(u => u?.role === 'learner').length === 0) && (
+                                                            <tr>
+                                                                <td colSpan="5" className="px-6 py-8 text-center text-xs text-gray-500 italic">No learners found.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </GlassCard>
+                                        </div>
+                                    </div>
                                 )}
 
                                 {activeTab === 'classrooms' && (
