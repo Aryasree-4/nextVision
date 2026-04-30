@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        location: {
+            type: String,
+            default: '',
+        },
+        currentlyPursuedCourse: {
+            type: String,
+            default: '',
+        },
         profilePicture: {
             type: String,
             default: 'default-profile.png',

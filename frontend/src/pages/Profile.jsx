@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from '../components/Button';
@@ -10,10 +10,13 @@ const Profile = () => {
     const { id } = useParams();
     const { user: currentUser, updateUserData } = useAuth();
     const navigate = useNavigate();
+    const routerLocation = useLocation();
 
     const [profileUser, setProfileUser] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [bio, setBio] = useState('');
+    const [location, setLocation] = useState('');
+    const [currentlyPursuedCourse, setCurrentlyPursuedCourse] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,6 +51,8 @@ const Profile = () => {
             const { data } = await api.get(`/users/profile/${profileId}`);
             setProfileUser(data);
             setBio(data.bio || '');
+            setLocation(data.location || '');
+            setCurrentlyPursuedCourse(data.currentlyPursuedCourse || '');
             setError('');
         } catch (err) {
             console.error('Fetch Profile Error:', err);
@@ -74,6 +79,8 @@ const Profile = () => {
 
         const formData = new FormData();
         formData.append('bio', bio);
+        formData.append('location', location);
+        formData.append('currentlyPursuedCourse', currentlyPursuedCourse);
         if (selectedFile) {
             formData.append('profilePicture', selectedFile);
         }
@@ -124,7 +131,13 @@ const Profile = () => {
             <div className="max-w-5xl mx-auto space-y-8">
                 {/* Back Link */}
                 <button
-                    onClick={() => navigate(-1)}
+                    onClick={() => {
+                        if (routerLocation.state?.fromMentorClassroom) {
+                            navigate('/mentor-dashboard', { state: routerLocation.state });
+                        } else {
+                            navigate(-1);
+                        }
+                    }}
                     className="text-gray-500 hover:text-white transition-all flex items-center gap-3 group text-xs font-black uppercase tracking-[0.2em]"
                 >
                     <span className="group-hover:-translate-x-1 transition-transform mb-0.5">&larr;</span> Back
@@ -228,8 +241,22 @@ const Profile = () => {
                                         <textarea
                                             value={bio}
                                             onChange={(e) => setBio(e.target.value)}
-                                            className="flex-1 w-full min-h-[250px] input-field p-6 text-sm leading-relaxed"
+                                            className="flex-1 w-full min-h-[150px] input-field p-6 text-sm leading-relaxed"
                                             placeholder="Transmit your biography into the network..."
+                                        />
+                                        <input
+                                            type="text"
+                                            value={location}
+                                            onChange={(e) => setLocation(e.target.value)}
+                                            className="w-full input-field p-4 text-sm"
+                                            placeholder="Location (e.g., Sector 4)"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={currentlyPursuedCourse}
+                                            onChange={(e) => setCurrentlyPursuedCourse(e.target.value)}
+                                            className="w-full input-field p-4 text-sm"
+                                            placeholder="Currently Pursued Course"
                                         />
                                         <div className="flex gap-4 justify-end">
                                             <button
@@ -237,6 +264,8 @@ const Profile = () => {
                                                 onClick={() => {
                                                     setIsEditing(false);
                                                     setBio(profileUser.bio || '');
+                                                    setLocation(profileUser.location || '');
+                                                    setCurrentlyPursuedCourse(profileUser.currentlyPursuedCourse || '');
                                                     setSelectedFile(null);
                                                     setPreviewUrl(null);
                                                 }}
@@ -254,19 +283,40 @@ const Profile = () => {
                                         </div>
                                     </form>
                                 ) : (
-                                    <div className="glass-panel p-8 min-h-[250px] border-white/5 bg-white/2 rounded-[2rem]">
-                                        <p className="text-gray-400 leading-relaxed font-light tracking-wide italic">
+                                    <div className="glass-panel p-8 min-h-[150px] border-white/5 bg-white/2 rounded-[2rem]">
+                                        <p className="text-gray-400 leading-relaxed font-light tracking-wide italic mb-6">
                                             {profileUser?.bio ? (
                                                 `"${profileUser.bio}"`
                                             ) : (
                                                 <span className="opacity-40">Astronaut's chronicle not yet established.</span>
                                             )}
                                         </p>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {profileUser?.location && (
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest flex items-center gap-2">📍 Location</p>
+                                                    <p className="text-white font-medium text-sm tracking-wide">{profileUser.location}</p>
+                                                </div>
+                                            )}
+                                            {profileUser?.currentlyPursuedCourse && (
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest flex items-center gap-2">📚 Pursuing</p>
+                                                    <p className="text-white font-medium text-sm tracking-wide">{profileUser.currentlyPursuedCourse}</p>
+                                                </div>
+                                            )}
+                                            {profileUser?.contactNumber && (
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest flex items-center gap-2">📞 Contact Number</p>
+                                                    <p className="text-white font-medium text-sm tracking-wide">{profileUser.contactNumber}</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
                                 {!isEditing && (
-                                    <div className="mt-12 grid grid-cols-2 gap-6 pt-10 border-t border-white/5">
+                                    <div className="mt-8 grid grid-cols-2 gap-6 pt-8 border-t border-white/5">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-2xl glass-panel flex items-center justify-center text-xl bg-white/5">🛸</div>
                                             <div>

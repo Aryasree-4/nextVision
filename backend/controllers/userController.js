@@ -115,6 +115,14 @@ const updateUserProfile = async (req, res) => {
             user.bio = req.body.bio;
         }
 
+        if (req.body.location !== undefined) {
+            user.location = req.body.location;
+        }
+
+        if (req.body.currentlyPursuedCourse !== undefined) {
+            user.currentlyPursuedCourse = req.body.currentlyPursuedCourse;
+        }
+
         if (req.file) {
             console.log('Processing new profile picture:', req.file.filename);
 
@@ -142,6 +150,9 @@ const updateUserProfile = async (req, res) => {
             email: updatedUser.email,
             role: updatedUser.role,
             bio: updatedUser.bio,
+            location: updatedUser.location,
+            currentlyPursuedCourse: updatedUser.currentlyPursuedCourse,
+            contactNumber: updatedUser.contactNumber,
             profilePicture: updatedUser.profilePicture,
             message: 'Profile updated successfully'
         });

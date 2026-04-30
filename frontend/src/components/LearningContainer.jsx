@@ -3,18 +3,73 @@ import Button from './Button';
 import QuizInterface from './QuizInterface';
 import api from '../api/axios';
 import { useNotifications } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
+import { jsPDF } from 'jspdf';
 import NotificationBoard from './NotificationBoard';
 import SpaceBackground from './SpaceBackground';
 import GlassCard from './GlassCard';
 
 const LearningContainer = ({ classroom, enrollment, onClose }) => {
     const { unreadCount, setCurrentClassroomId } = useNotifications();
+    const { user } = useAuth();
     const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
     const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
     const [showQuiz, setShowQuiz] = useState(false);
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showNotifications, setShowNotifications] = useState(false);
+
+    const downloadCertificate = () => {
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Simple Border
+        doc.setLineWidth(2);
+        doc.rect(10, 10, 277, 190);
+        doc.setLineWidth(0.5);
+        doc.rect(12, 12, 273, 186);
+
+        // Header
+        doc.setFontSize(40);
+        doc.setTextColor(30, 64, 175); // Blue
+        doc.text('Certificate of Completion', 148.5, 50, { align: 'center' });
+
+        doc.setFontSize(16);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Issued by Next Vision', 148.5, 65, { align: 'center' });
+
+        // Learner Name
+        doc.setFontSize(18);
+        doc.setTextColor(0, 0, 0);
+        doc.text('This is to certify that', 148.5, 90, { align: 'center' });
+
+        doc.setFontSize(32);
+        doc.setTextColor(0, 0, 0);
+        doc.text(user?.name || 'Learner', 148.5, 110, { align: 'center' });
+
+        // Course Title
+        doc.setFontSize(18);
+        doc.text('has successfully completed the course', 148.5, 130, { align: 'center' });
+
+        doc.setFontSize(26);
+        doc.setTextColor(30, 64, 175);
+        doc.text(classroom.course?.title || 'Course', 148.5, 150, { align: 'center' });
+
+        // Footer Information
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        
+        const mentorName = classroom.mentor?.name || 'TBA';
+        const dateCompleted = new Date().toLocaleDateString();
+
+        doc.text(`Mentor: ${mentorName}`, 40, 180);
+        doc.text(`Date: ${dateCompleted}`, 200, 180);
+
+        doc.save(`${classroom.course?.title || 'Course'}_Certificate.pdf`);
+    };
 
     useEffect(() => {
         fetchProgress();
@@ -67,9 +122,12 @@ const LearningContainer = ({ classroom, enrollment, onClose }) => {
                     <div className="bg-white/5 p-6 rounded-2xl border border-white/5 mb-10 text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 inline-block">
                         Modules Secured: {classroom.syllabus?.length || 0} | Status: Pending Authorization
                     </div>
-                    <div className="block">
-                        <Button onClick={onClose} className="px-16 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button onClick={onClose} variant="secondary" className="px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
                             Back to Dashboard
+                        </Button>
+                        <Button onClick={downloadCertificate} className="px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                            Download Certificate
                         </Button>
                     </div>
                 </GlassCard>

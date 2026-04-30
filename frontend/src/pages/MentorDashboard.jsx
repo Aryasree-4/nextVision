@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from '../components/Button';
@@ -10,7 +10,8 @@ import { useNotifications } from '../context/NotificationContext';
 
 const MentorDashboard = () => {
     const { user, logout } = useAuth();
-    const [activeTab, setActiveTab] = useState('browse');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'browse');
     const [courses, setCourses] = useState([]);
     const [myClassrooms, setMyClassrooms] = useState([]);
     const [selectedClassroom, setSelectedClassroom] = useState(null);
@@ -19,7 +20,7 @@ const MentorDashboard = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [performanceData, setPerformanceData] = useState([]);
-    const [activeSubTab, setActiveSubTab] = useState('syllabus'); // syllabus, performance
+    const [activeSubTab, setActiveSubTab] = useState(location.state?.activeSubTab || 'syllabus'); // syllabus, performance
     const [editingQuiz, setEditingQuiz] = useState(null); // { moduleIndex, questions }
 
     const { broadcastNotification } = useNotifications();
@@ -44,7 +45,20 @@ const MentorDashboard = () => {
     const fetchMyClassrooms = async () => {
         try {
             const { data } = await api.get('/classrooms/my-classrooms');
-            if (Array.isArray(data)) setMyClassrooms(data);
+            if (Array.isArray(data)) {
+                setMyClassrooms(data);
+                if (location.state?.fromMentorClassroom) {
+                    const foundClassroom = data.find(c => c._id === location.state.fromMentorClassroom);
+                    if (foundClassroom) {
+                        setSelectedClassroom(foundClassroom);
+                        if (location.state.activeSubTab === 'performance') {
+                            api.get(`/classrooms/${foundClassroom._id}/performance`)
+                               .then(res => setPerformanceData(res.data))
+                               .catch(console.error);
+                        }
+                    }
+                }
+            }
         } catch (error) {
             console.error('Failed to fetch classrooms', error);
         }
@@ -438,13 +452,18 @@ const MentorDashboard = () => {
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <p className="text-white font-medium">{student.name}</p>
-                                                                    <a
-                                                                        href={`/profile/${student._id}`}
+                                                                    <Link
+                                                                        to={`/profile/${student._id}`}
+                                                                        state={{ 
+                                                                            fromMentorClassroom: selectedClassroom._id,
+                                                                            activeTab: 'classrooms',
+                                                                            activeSubTab: activeSubTab
+                                                                        }}
                                                                         className="text-xs text-space-light hover:underline opacity-0 group-hover:opacity-100 transition"
                                                                         onClick={(e) => { e.stopPropagation(); }}
                                                                     >
                                                                         View Profile
-                                                                    </a>
+                                                                    </Link>
                                                                 </div>
                                                             </div>
                                                         )
