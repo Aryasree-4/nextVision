@@ -23,11 +23,12 @@ const createCourse = async (req, res) => {
             coverImage,
             modules: modules ? JSON.parse(modules) : [],
             isPublished: published,
-            createdBy: req.session.userId // Using session ID
+            createdBy: req.user._id // Using req.user._id
         });
 
         res.status(201).json(course);
     } catch (error) {
+        console.error('Course creation error:', error);
         res.status(400).json({ message: 'Invalid course data', error: error.message });
     }
 };
