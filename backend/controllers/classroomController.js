@@ -289,6 +289,12 @@ const reassignStudent = async (req, res) => {
         await fromClassroom.save();
         await toClassroom.save();
 
+        // Update the progress document to point to the new classroom
+        await Progress.findOneAndUpdate(
+            { studentId, classroomId: fromClassroomId },
+            { classroomId: toClassroomId }
+        );
+
         res.status(200).json({ message: 'Student reassigned successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -307,6 +313,7 @@ const deleteClassroom = async (req, res) => {
 
         // Deleting classroom automatically "unenrolls" students effectively as they are just references in this array
         // They fall back to course selection.
+        await Progress.deleteMany({ classroomId: req.params.id }); // Delete all associated progress records
         await classroom.deleteOne();
         res.status(200).json({ message: 'Classroom deleted and students unenrolled' });
     } catch (error) {
@@ -334,6 +341,9 @@ const unenrollStudent = async (req, res) => {
 
         classroom.students.pull(studentId);
         await classroom.save();
+
+        // Delete the progress document to unblock future enrollments
+        await Progress.findOneAndDelete({ studentId, classroomId });
 
         res.status(200).json({ message: 'Successfully quit the course' });
     } catch (error) {
